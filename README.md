@@ -17,7 +17,7 @@
 
 ## 🚀 Installation
 
-1.  Download the latest release from the [Releases](https://github.com/phphacker/lce/releases) page.
+1.  Download the latest release from the [Releases](https://github.com/phphackerr/LoD-Config-Editor/releases) page.
 2.  Run `LCE_Setup.exe` (or the portable executable).
 3.  On first launch, the application will attempt to locate your Warcraft III folder. If not found, you can specify it manually in the settings.
 
