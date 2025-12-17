@@ -1,6 +1,7 @@
 package version
 
 import (
+	"embed"
 	"encoding/json"
 	"log"
 	"os"
@@ -30,15 +31,50 @@ var (
 )
 
 // Init initializes the version package.
-// It tries to read manifest.json from appDataDir.
-// If not found, it writes the embedded manifestData to that location.
-// It then loads the versions into memory.
-func Init(manifestData []byte, appDataDir string) {
+func Init(manifestData []byte, themesFS, localesFS embed.FS, appDataDir, exeDir string) {
 	manifestPath := filepath.Join(appDataDir, "manifest.json")
 
-	// Ensure directory exists
+	// Ensure AppData directory exists
 	if err := os.MkdirAll(appDataDir, 0755); err != nil {
 		log.Printf("failed to create app data dir: %v", err)
+	}
+
+	// Bootstrap Themes (in ExeDir)
+	themesDir := filepath.Join(exeDir, "themes")
+	if err := os.MkdirAll(themesDir, 0755); err != nil {
+		log.Printf("failed to create themes dir: %v", err)
+	}
+	
+	// Always check and unpack default themes if missing
+	entries, _ := themesFS.ReadDir("themes")
+	for _, entry := range entries {
+		targetPath := filepath.Join(themesDir, entry.Name())
+		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+			// File doesn't exist, unpack it
+			data, _ := themesFS.ReadFile("themes/" + entry.Name())
+			if err := os.WriteFile(targetPath, data, 0644); err != nil {
+				log.Printf("failed to unpack theme %s: %v", entry.Name(), err)
+			}
+		}
+	}
+
+	// Bootstrap Locales (in ExeDir)
+	localesDir := filepath.Join(exeDir, "locales")
+	if err := os.MkdirAll(localesDir, 0755); err != nil {
+		log.Printf("failed to create locales dir: %v", err)
+	}
+
+	// Always check and unpack default locales if missing
+	entries, _ = localesFS.ReadDir("locales")
+	for _, entry := range entries {
+		targetPath := filepath.Join(localesDir, entry.Name())
+		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+			// File doesn't exist, unpack it
+			data, _ := localesFS.ReadFile("locales/" + entry.Name())
+			if err := os.WriteFile(targetPath, data, 0644); err != nil {
+				log.Printf("failed to unpack locale %s: %v", entry.Name(), err)
+			}
+		}
 	}
 
 	var m Manifest

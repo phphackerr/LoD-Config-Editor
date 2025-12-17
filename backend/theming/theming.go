@@ -17,9 +17,13 @@ func NewThemeService() *ThemeService {
 
 // путь к директории с темами
 func (ts *ThemeService) getThemesDir() (string, error) {
-	themesDir := "themes" // директория в корне рядом с приложением
+	ex, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("не удалось получить путь к исполняемому файлу: %w", err)
+	}
+	themesDir := filepath.Join(filepath.Dir(ex), "themes")
 
-	_, err := os.ReadDir(themesDir)
+	_, err = os.ReadDir(themesDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// если папки нет — создаём

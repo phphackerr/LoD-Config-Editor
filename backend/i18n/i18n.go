@@ -26,29 +26,20 @@ func NewI18N() *I18N {
 
 // getLocalesPath returns the absolute path to the locales directory
 func getLocalesPath() (string, error) {
-	// In a real app, you might want to look relative to the executable
-	// or in a specific config folder. For now, we'll try to find it relative to CWD
-	// or the executable.
-	
-	// Check current working directory first (good for dev)
-	cwd, err := os.Getwd()
-	if err == nil {
-		path := filepath.Join(cwd, "locales")
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
-	}
-
-	// Check executable directory (good for prod)
 	ex, err := os.Executable()
-	if err == nil {
-		path := filepath.Join(filepath.Dir(ex), "locales")
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
+	if err != nil {
+		return "", fmt.Errorf("failed to get executable path: %w", err)
+	}
+	
+	path := filepath.Join(filepath.Dir(ex), "locales")
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
 	}
 
-	return "", fmt.Errorf("locales directory not found")
+	// Fallback to CWD for dev environment if needed, or just return error
+	// For portable app, we prefer exe dir.
+	
+	return path, nil // Return path even if not exists, caller might handle or it might be created later
 }
 
 // GetLanguages returns available languages

@@ -27,16 +27,29 @@ var assets embed.FS
 //go:embed manifest.json
 var manifestData []byte
 
+//go:embed themes/*
+var themesFS embed.FS
+
+//go:embed locales/*
+var localesFS embed.FS
+
 func main() {
-	// Get user config directory
+	// Get user config directory for manifest
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		log.Fatalf("failed to get user config dir: %v", err)
 	}
 	appDataDir := filepath.Join(configDir, "LCE")
 
-	// Initialize version info from embedded manifest and local file
-	version.Init(manifestData, appDataDir)
+	// Get executable directory for assets
+	ex, err := os.Executable()
+	if err != nil {
+		log.Fatalf("failed to get executable path: %v", err)
+	}
+	exeDir := filepath.Dir(ex)
+
+	// Initialize version info: manifest in AppData, assets in ExeDir
+	version.Init(manifestData, themesFS, localesFS, appDataDir, exeDir)
 
 	app := application.New(application.Options{
 		Name:        "LoD Config Editor",

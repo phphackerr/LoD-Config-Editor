@@ -29,7 +29,7 @@ type ComponentUpdate struct {
 	Changelog string `json:"changelog"`
 }
 
-// getVersionsPath returns the path to versions.json in AppData/LCE
+// getVersionsPath returns the path to manifest.json in AppData/LCE
 func getVersionsPath() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -43,7 +43,7 @@ func getVersionsPath() (string, error) {
 		}
 	}
 
-	return filepath.Join(appConfigDir, "versions.json"), nil
+	return filepath.Join(appConfigDir, "manifest.json"), nil
 }
 
 // LoadLocalVersions loads versions from versions.json or initializes with defaults
@@ -171,18 +171,26 @@ func (u *Updater) UpdateComponent(update ComponentUpdate) error {
 	// Let's assume we save them to AppData/LCE/themes and AppData/LCE/locales
 	// and the app logic (theming/i18n) needs to support loading from there.
 	
-	configDir, err := os.UserConfigDir()
+	// Determine target path relative to executable
+	ex, err := os.Executable()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get executable path: %w", err)
 	}
-	appDataDir := filepath.Join(configDir, "LCE")
+	exeDir := filepath.Dir(ex)
 
 	if update.Type == "theme" {
 		url = fmt.Sprintf("%s/themes/%s.css", BaseRepoURL, update.Name)
-		filename = filepath.Join(appDataDir, "themes", update.Name+".json")
+		filename = filepath.Join(exeDir, "themes", update.Name+".json") // Note: User changed extension to .json in previous step, assuming themes are JSON now?
+		// Wait, themes are JSON in this project (theming.go loads .json).
+		// But in component_updater.go line 178 it says .css in URL.
+		// Let's check theming.go again. It loads .json.
+		// So URL should probably be .json too?
+		// The user manually changed .css to .json in step 2423.
+		// So I should respect that.
+		url = fmt.Sprintf("%s/themes/%s.json", BaseRepoURL, update.Name)
 	} else if update.Type == "locale" {
 		url = fmt.Sprintf("%s/locales/%s.json", BaseRepoURL, update.Name)
-		filename = filepath.Join(appDataDir, "locales", update.Name+".json")
+		filename = filepath.Join(exeDir, "locales", update.Name+".json")
 	} else {
 		return fmt.Errorf("unknown component type: %s", update.Type)
 	}
