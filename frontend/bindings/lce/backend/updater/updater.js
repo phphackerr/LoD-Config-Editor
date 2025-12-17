@@ -31,21 +31,12 @@ export function CheckForUpdates() {
 }
 
 /**
- * DoUpdate downloads and applies the update
+ * DoUpdate downloads the new version side-by-side and launches it
  * @param {string} version
  * @returns {$CancellablePromise<void>}
  */
 export function DoUpdate(version) {
     return $Call.ByID(1725521721, version);
-}
-
-/**
- * DownloadAndRunInstaller is an alternative if we want to run a setup.exe
- * @param {string} version
- * @returns {$CancellablePromise<void>}
- */
-export function DownloadAndRunInstaller(version) {
-    return $Call.ByID(3067414129, version);
 }
 
 /**
