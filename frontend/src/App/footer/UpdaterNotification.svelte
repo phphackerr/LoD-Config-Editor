@@ -1,12 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
-  import {
-    updaterStore,
-    checkForUpdates,
-    doUpdate,
-    updateComponent
-  } from '../../lib/store/updater';
+  import { updaterStore, checkForUpdates, doUpdate, updateComponent } from '../lib/store/updater';
   import { t } from 'svelte-i18n';
 
   onMount(() => {
