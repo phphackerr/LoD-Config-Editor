@@ -1,0 +1,107 @@
+package utils
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+type Utils struct{}
+
+func NewUtils() *Utils {
+	return &Utils{}
+}
+
+// Открыть папку в проводнике
+func (g *Utils) OpenFolderInExplorer(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки пути: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("путь '%s' не является папкой", path)
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("ошибка получения абсолютного пути: %w", err)
+	}
+
+	cmd := exec.Command("explorer", absPath)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("ошибка запуска explorer: %w", err)
+	}
+	return nil
+}
+
+// Запуск игры с аргументами
+func (g *Utils) LaunchGameExe(path string, args ...string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки пути: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("указанный путь '%s' не является папкой", path)
+	}
+
+	var war3Path, frozenPath string
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return fmt.Errorf("ошибка чтения директории: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := strings.ToLower(entry.Name())
+		if name == "war3.exe" {
+			war3Path = filepath.Join(path, entry.Name())
+			break
+		} else if name == "frozen throne.exe" {
+			frozenPath = filepath.Join(path, entry.Name())
+		}
+	}
+
+	var exeToLaunch string
+	if war3Path != "" {
+		exeToLaunch = war3Path
+	} else if frozenPath != "" {
+		exeToLaunch = frozenPath
+	} else {
+		return fmt.Errorf("файлы 'war3.exe' или 'Frozen Throne.exe' не найдены в '%s'", path)
+	}
+
+	cmd := exec.Command(exeToLaunch, args...)
+	cmd.Dir = path
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("ошибка запуска '%s': %w", exeToLaunch, err)
+	}
+
+	return nil
+}
+
+func (g *Utils) OpenFile(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки пути: %w", err)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("путь '%s' является папкой, а не файлом", path)
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("ошибка получения абсолютного пути: %w", err)
+	}
+
+	cmd := exec.Command("cmd", "/C", "start", "", absPath)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("ошибка запуска команды: %w", err)
+	}
+	return nil
+}

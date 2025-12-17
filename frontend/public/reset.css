@@ -1,0 +1,51 @@
+/* Базовое — box-sizing для всех элементов */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Убираем отступы по умолчанию */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/* Делаем body на всю высоту и удобную базу */
+html,
+body {
+    height: 100%;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Изображения и медиа ведут себя предсказуемо */
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+/* Наследуем шрифт для форм */
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+/* Чистый список без точек */
+ul,
+ol {
+    list-style: none;
+}
+
+/* Убираем подчеркивания ссылок */
+a {
+    text-decoration: none;
+    color: inherit;
+}

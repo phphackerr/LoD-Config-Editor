@@ -1,0 +1,29 @@
+# Wails
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+go.work
+go.work.sum
+vendor/
+
+# Node
+frontend/node_modules
+frontend/dist
+frontend/.svelte-kit
+# frontend/package-lock.json # Committing lock file is recommended
+
+# IDE
+.vscode
+.idea
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Task
+.task
