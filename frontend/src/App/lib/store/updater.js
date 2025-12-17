@@ -15,7 +15,8 @@ export const updaterStore = writable({
   downloading: false,
   progress: 0,
   error: null,
-  componentUpdates: [] // Array of {type, name, version, changelog}
+  componentUpdates: [], // Array of {type, name, version, changelog}
+  readyToRestart: false
 });
 
 export async function checkForUpdates() {
@@ -47,11 +48,21 @@ export async function doUpdate(version) {
 
   try {
     await DoUpdate(version);
-    // Success - usually the app restarts or closes, but we can show a message
-    updaterStore.update((s) => ({ ...s, downloading: false, progress: 100 }));
-    alert('Update downloaded! Please restart the application.');
+    // Update downloaded, ready to restart
+    updaterStore.update((s) => ({ ...s, downloading: false, progress: 100, readyToRestart: true }));
   } catch (err) {
     updaterStore.update((s) => ({ ...s, downloading: false, error: err.message }));
+  }
+}
+
+export async function restartApp() {
+  try {
+    // We need to import RestartApp from bindings, but it might not be generated yet.
+    // Assuming wails generates it.
+    const { RestartApp } = await import('/bindings/lce/backend/updater/updater');
+    await RestartApp();
+  } catch (err) {
+    updaterStore.update((s) => ({ ...s, error: err.message }));
   }
 }
 

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -22,8 +21,8 @@ const (
 )
 
 type Updater struct {
-	app  *application.App
-	lock sync.Mutex
+	app        *application.App
+	newExePath string
 }
 
 type ReleaseInfo struct {
@@ -85,6 +84,9 @@ func (u *Updater) CheckForUpdates() UpdateCheckResult {
 // DoUpdate downloads the new version side-by-side and launches it
 func (u *Updater) DoUpdate(version string) error {
 	// 1. Fetch release info
+	// url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", RepoOwner, RepoName, version)
+	// Actually we need to fetch the release info to get the assets.
+	// The previous code was:
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", RepoOwner, RepoName, version)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -160,14 +162,24 @@ func (u *Updater) DoUpdate(version string) error {
 	}
 
 	// 5. Launch new executable and quit
-	u.app.Event.Emit("update:progress", map[string]interface{}{"status": "installing", "percent": 100})
+	u.app.Event.Emit("update:progress", map[string]interface{}{"status": "ready", "percent": 100})
 	
-	cmd := exec.Command(newExePath)
+	// Store path for restart
+	u.newExePath = newExePath
+	return nil
+}
+
+// RestartApp launches the new executable and quits the current one
+func (u *Updater) RestartApp() error {
+	if u.newExePath == "" {
+		return fmt.Errorf("no update ready to install")
+	}
+
+	cmd := exec.Command(u.newExePath)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start new version: %w", err)
 	}
 
-	// Quit current app
 	u.app.Quit()
 	return nil
 }

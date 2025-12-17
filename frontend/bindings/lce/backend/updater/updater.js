@@ -50,6 +50,14 @@ export function LoadLocalVersions() {
 }
 
 /**
+ * RestartApp launches the new executable and quits the current one
+ * @returns {$CancellablePromise<void>}
+ */
+export function RestartApp() {
+    return $Call.ByID(4288405115);
+}
+
+/**
  * SaveLocalVersions saves versions to versions.json
  * @param {$models.ComponentVersions} versions
  * @returns {$CancellablePromise<void>}

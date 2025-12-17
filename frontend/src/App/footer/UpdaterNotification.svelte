@@ -1,7 +1,13 @@
 <script>
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
-  import { updaterStore, checkForUpdates, doUpdate, updateComponent } from '../lib/store/updater';
+  import {
+    updaterStore,
+    checkForUpdates,
+    doUpdate,
+    updateComponent,
+    restartApp
+  } from '../lib/store/updater';
   import { t } from 'svelte-i18n';
 
   onMount(() => {
@@ -12,6 +18,10 @@
     if ($updaterStore.version) {
       doUpdate($updaterStore.version);
     }
+  }
+
+  function handleRestart() {
+    restartApp();
   }
 
   function handleComponentUpdate(component) {
@@ -32,6 +42,11 @@
               <div class="fill" style="width: {$updaterStore.progress}%"></div>
             </div>
             <span class="status">Downloading... {Math.round($updaterStore.progress)}%</span>
+          {:else if $updaterStore.readyToRestart}
+            <div class="success-msg">{$t('update_ready', { default: 'Download Complete!' })}</div>
+            <button class="update-btn restart-btn" on:click={handleRestart}>
+              {$t('restart_now', { default: 'Restart Now' })}
+            </button>
           {:else}
             <button class="update-btn" on:click={handleUpdate}>
               {$t('update_now', { default: 'Update Now' })}
@@ -109,6 +124,22 @@
   .update-btn:hover {
     background: #ffed4a;
     transform: translateY(-1px);
+  }
+
+  .restart-btn {
+    background: #4caf50;
+    color: white;
+  }
+
+  .restart-btn:hover {
+    background: #45a049;
+  }
+
+  .success-msg {
+    color: #4caf50;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
   }
 
   .progress-bar {

@@ -178,20 +178,14 @@ func (u *Updater) UpdateComponent(update ComponentUpdate) error {
 	}
 	exeDir := filepath.Dir(ex)
 
-	if update.Type == "theme" {
-		url = fmt.Sprintf("%s/themes/%s.css", BaseRepoURL, update.Name)
-		filename = filepath.Join(exeDir, "themes", update.Name+".json") // Note: User changed extension to .json in previous step, assuming themes are JSON now?
-		// Wait, themes are JSON in this project (theming.go loads .json).
-		// But in component_updater.go line 178 it says .css in URL.
-		// Let's check theming.go again. It loads .json.
-		// So URL should probably be .json too?
-		// The user manually changed .css to .json in step 2423.
-		// So I should respect that.
+	switch update.Type {
+	case "theme":
+		filename = filepath.Join(exeDir, "themes", update.Name+".json")
 		url = fmt.Sprintf("%s/themes/%s.json", BaseRepoURL, update.Name)
-	} else if update.Type == "locale" {
+	case "locale":
 		url = fmt.Sprintf("%s/locales/%s.json", BaseRepoURL, update.Name)
 		filename = filepath.Join(exeDir, "locales", update.Name+".json")
-	} else {
+	default:
 		return fmt.Errorf("unknown component type: %s", update.Type)
 	}
 
