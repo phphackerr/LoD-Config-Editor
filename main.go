@@ -48,6 +48,9 @@ func main() {
 	}
 	exeDir := filepath.Dir(ex)
 
+	// Cleanup old executables from previous updates
+	updater.CleanupOldExecutables()
+
 	// Initialize version info: manifest in AppData, assets in ExeDir
 	version.Init(manifestData, themesFS, localesFS, appDataDir, exeDir)
 
