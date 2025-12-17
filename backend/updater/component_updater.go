@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	ManifestURL = "https://raw.githubusercontent.com/phphackerr/LoD-Config-Editor/main/manifest.json"
-	BaseRepoURL = "https://raw.githubusercontent.com/phphackerr/LoD-Config-Editor/main"
+	ManifestURL = "https://raw.githubusercontent.com/phphackerr/LoD-Config-Editor/master/manifest.json"
+	BaseRepoURL = "https://raw.githubusercontent.com/phphackerr/LoD-Config-Editor/master"
 )
 
 // ComponentVersions matches the structure of manifest.json
