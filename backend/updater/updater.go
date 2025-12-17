@@ -65,7 +65,7 @@ func (u *Updater) CheckForUpdates() UpdateCheckResult {
 
 	// Simple version comparison (lexicographical for now, assuming vX.Y.Z format)
 	// In a real app, use semver library
-	if release.TagName > version.AppVersion {
+	if release.TagName > version.App.Version {
 		return UpdateCheckResult{
 			Available: true,
 			Version:   release.TagName,
@@ -73,7 +73,7 @@ func (u *Updater) CheckForUpdates() UpdateCheckResult {
 		}
 	}
 
-	return UpdateCheckResult{Available: false, Version: version.AppVersion}
+	return UpdateCheckResult{Available: false, Version: version.App.Version}
 }
 
 // DoUpdate downloads and applies the update

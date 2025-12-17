@@ -50,7 +50,12 @@
           <span class="title">{$t('component_updates', { default: 'Component Updates' })}</span>
           {#each $updaterStore.componentUpdates as comp}
             <div class="component-item">
-              <span>{comp.type}: {comp.name} ({comp.version})</span>
+              <div class="comp-info">
+                <span class="comp-name">{comp.type}: {comp.name} ({comp.version})</span>
+                {#if comp.changelog}
+                  <span class="comp-changelog">{comp.changelog}</span>
+                {/if}
+              </div>
               <button class="btn-small" on:click={() => handleComponentUpdate(comp)}>
                 {$t('update', { default: 'Update' })}
               </button>
@@ -147,7 +152,25 @@
     justify-content: space-between;
     align-items: center;
     font-size: 12px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 5px;
+  }
+
+  .comp-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .comp-name {
+    font-weight: bold;
+  }
+
+  .comp-changelog {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 2px;
+    font-style: italic;
   }
 
   .btn-small {

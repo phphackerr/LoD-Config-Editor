@@ -7,21 +7,26 @@ import (
 	"path/filepath"
 )
 
+type ComponentInfo struct {
+	Version   string `json:"version"`
+	Changelog string `json:"changelog,omitempty"`
+}
+
 type Manifest struct {
-	AppVersion string            `json:"app_version"`
-	Themes     map[string]string `json:"themes"`
-	Locales    map[string]string `json:"locales"`
+	AppVersion ComponentInfo            `json:"app_version"`
+	Themes     map[string]ComponentInfo `json:"themes"`
+	Locales    map[string]ComponentInfo `json:"locales"`
 }
 
 var (
-	// AppVersion - текущая версия приложения
-	AppVersion string
+	// App - текущая версия приложения и список изменений
+	App ComponentInfo
 
 	// Themes - версии тем
-	Themes map[string]string
+	Themes map[string]ComponentInfo
 
 	// Locales - версии языков
-	Locales map[string]string
+	Locales map[string]ComponentInfo
 )
 
 // Init initializes the version package.
@@ -54,7 +59,7 @@ func Init(manifestData []byte, appDataDir string) {
 		}
 	}
 
-	AppVersion = m.AppVersion
+	App = m.AppVersion
 	Themes = m.Themes
 	Locales = m.Locales
 }

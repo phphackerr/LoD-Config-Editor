@@ -17,15 +17,16 @@ const (
 
 // ComponentVersions matches the structure of manifest.json
 type ComponentVersions struct {
-	AppVersion string            `json:"app_version"` // Added AppVersion
-	Themes     map[string]string `json:"themes"`
-	Locales    map[string]string `json:"locales"`
+	AppVersion version.ComponentInfo        `json:"app_version"`
+	Themes     map[string]version.ComponentInfo `json:"themes"`
+	Locales    map[string]version.ComponentInfo `json:"locales"`
 }
 
 type ComponentUpdate struct {
-	Type    string `json:"type"` // "theme" or "locale"
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Type      string `json:"type"` // "theme" or "locale"
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	Changelog string `json:"changelog"`
 }
 
 // getVersionsPath returns the path to versions.json in AppData/LCE
@@ -57,7 +58,7 @@ func (u *Updater) LoadLocalVersions() (ComponentVersions, error) {
 		if os.IsNotExist(err) {
 			// Initialize with defaults from compiled binary (embedded manifest)
 			defaults := ComponentVersions{
-				AppVersion: version.AppVersion,
+				AppVersion: version.App,
 				Themes:     version.Themes,
 				Locales:    version.Locales,
 			}
@@ -74,10 +75,10 @@ func (u *Updater) LoadLocalVersions() (ComponentVersions, error) {
 
 	// Ensure maps are not nil
 	if versions.Themes == nil {
-		versions.Themes = make(map[string]string)
+		versions.Themes = make(map[string]version.ComponentInfo)
 	}
 	if versions.Locales == nil {
-		versions.Locales = make(map[string]string)
+		versions.Locales = make(map[string]version.ComponentInfo)
 	}
 
 	return versions, nil
@@ -125,26 +126,28 @@ func (u *Updater) CheckForComponentUpdates() ([]ComponentUpdate, error) {
 	var updates []ComponentUpdate
 
 	// 3. Compare Themes
-	for name, remoteVer := range remote.Themes {
-		localVer, exists := local.Themes[name]
+	for name, remoteInfo := range remote.Themes {
+		localInfo, exists := local.Themes[name]
 		// If new theme or newer version
-		if !exists || remoteVer > localVer {
+		if !exists || remoteInfo.Version > localInfo.Version {
 			updates = append(updates, ComponentUpdate{
-				Type:    "theme",
-				Name:    name,
-				Version: remoteVer,
+				Type:      "theme",
+				Name:      name,
+				Version:   remoteInfo.Version,
+				Changelog: remoteInfo.Changelog,
 			})
 		}
 	}
 
 	// 4. Compare Locales
-	for name, remoteVer := range remote.Locales {
-		localVer, exists := local.Locales[name]
-		if !exists || remoteVer > localVer {
+	for name, remoteInfo := range remote.Locales {
+		localInfo, exists := local.Locales[name]
+		if !exists || remoteInfo.Version > localInfo.Version {
 			updates = append(updates, ComponentUpdate{
-				Type:    "locale",
-				Name:    name,
-				Version: remoteVer,
+				Type:      "locale",
+				Name:      name,
+				Version:   remoteInfo.Version,
+				Changelog: remoteInfo.Changelog,
 			})
 		}
 	}
@@ -222,9 +225,15 @@ func (u *Updater) UpdateComponent(update ComponentUpdate) error {
 	}
 
 	if update.Type == "theme" {
-		local.Themes[update.Name] = update.Version
+		local.Themes[update.Name] = version.ComponentInfo{
+			Version:   update.Version,
+			Changelog: update.Changelog,
+		}
 	} else {
-		local.Locales[update.Name] = update.Version
+		local.Locales[update.Name] = version.ComponentInfo{
+			Version:   update.Version,
+			Changelog: update.Changelog,
+		}
 	}
 
 	return u.SaveLocalVersions(local)

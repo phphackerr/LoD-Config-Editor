@@ -15,7 +15,7 @@ export const updaterStore = writable({
   downloading: false,
   progress: 0,
   error: null,
-  componentUpdates: [] // Array of {type, name, version}
+  componentUpdates: [] // Array of {type, name, version, changelog}
 });
 
 export async function checkForUpdates() {
