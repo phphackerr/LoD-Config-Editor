@@ -3,6 +3,8 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
@@ -14,13 +16,27 @@ import (
 	"lce/backend/paths_scanner"
 	"lce/backend/taskbar"
 	"lce/backend/theming"
+	"lce/backend/updater"
 	"lce/backend/utils"
+	"lce/backend/version"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed manifest.json
+var manifestData []byte
+
 func main() {
+	// Get user config directory
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatalf("failed to get user config dir: %v", err)
+	}
+	appDataDir := filepath.Join(configDir, "LCE")
+
+	// Initialize version info from embedded manifest and local file
+	version.Init(manifestData, appDataDir)
 
 	app := application.New(application.Options{
 		Name:        "LoD Config Editor",
@@ -55,9 +71,12 @@ func main() {
 	mapDownloader := map_downloader.NewMapDownloader(app)
 	app.RegisterService(application.NewService(mapDownloader))
 
-	err := app.Run()
+	updaterService := updater.NewUpdater(app)
+	app.RegisterService(application.NewService(updaterService))
 
-	if err != nil {
+	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
+
+
 }
