@@ -65,7 +65,10 @@ func (u *Updater) CheckForUpdates() UpdateCheckResult {
 
 	// Simple version comparison (lexicographical for now, assuming vX.Y.Z format)
 	// In a real app, use semver library
-	if release.TagName > version.App.Version {
+	remoteVer := strings.TrimPrefix(release.TagName, "v")
+	localVer := strings.TrimPrefix(version.App.Version, "v")
+
+	if remoteVer > localVer {
 		return UpdateCheckResult{
 			Available: true,
 			Version:   release.TagName,

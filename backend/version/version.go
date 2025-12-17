@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type ComponentInfo struct {
@@ -78,6 +79,10 @@ func Init(manifestData []byte, themesFS, localesFS embed.FS, appDataDir, exeDir 
 	}
 
 	var m Manifest
+	var embeddedManifest Manifest
+
+	// Always parse embedded manifest first to get the binary's version
+	parseEmbedded(manifestData, &embeddedManifest)
 
 	// Try to read local file
 	data, err := os.ReadFile(manifestPath)
@@ -85,11 +90,27 @@ func Init(manifestData []byte, themesFS, localesFS embed.FS, appDataDir, exeDir 
 		// Found local file, parse it
 		if err := json.Unmarshal(data, &m); err != nil {
 			log.Printf("failed to parse local manifest: %v, falling back to embedded", err)
-			parseEmbedded(manifestData, &m)
+			m = embeddedManifest
+		} else {
+			// Check if embedded version is newer than local version
+			// This happens when the user updates the binary (exe) but the local manifest in AppData is old.
+			embeddedVer := strings.TrimPrefix(embeddedManifest.AppVersion.Version, "v")
+			localVer := strings.TrimPrefix(m.AppVersion.Version, "v")
+
+			if embeddedVer > localVer {
+				log.Printf("Embedded version (%s) is newer than local (%s). Updating local manifest.", embeddedVer, localVer)
+				m = embeddedManifest
+				// Save the updated manifest to disk
+				if newManifestData, err := json.MarshalIndent(m, "", "  "); err == nil {
+					if err := os.WriteFile(manifestPath, newManifestData, 0644); err != nil {
+						log.Printf("failed to update local manifest: %v", err)
+					}
+				}
+			}
 		}
 	} else {
 		// No local file (or error), use embedded and write it to disk
-		parseEmbedded(manifestData, &m)
+		m = embeddedManifest
 		if err := os.WriteFile(manifestPath, manifestData, 0644); err != nil {
 			log.Printf("failed to write bootstrap manifest: %v", err)
 		}
