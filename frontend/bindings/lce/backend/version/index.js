@@ -5,3 +5,9 @@
 export {
     ComponentInfo
 } from "./models.js";
+
+import * as $models from "./models.js";
+
+/**
+ * @typedef {$models.MultiLineString} MultiLineString
+ */

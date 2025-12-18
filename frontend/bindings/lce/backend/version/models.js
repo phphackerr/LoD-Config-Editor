@@ -22,7 +22,7 @@ export class ComponentInfo {
         if (/** @type {any} */(false)) {
             /**
              * @member
-             * @type {string | undefined}
+             * @type {MultiLineString | undefined}
              */
             this["changelog"] = undefined;
         }
@@ -40,3 +40,7 @@ export class ComponentInfo {
         return new ComponentInfo(/** @type {Partial<ComponentInfo>} */($$parsedSource));
     }
 }
+
+/**
+ * @typedef {string} MultiLineString
+ */
