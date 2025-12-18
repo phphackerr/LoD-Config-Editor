@@ -188,7 +188,7 @@
 
   <div class="slider-header">
     <span class="label">
-      <span>{$t(label.toLowerCase())}</span>:
+      <span>{$t(label)}</span>:
       <span class="value">{value}</span>
     </span>
 

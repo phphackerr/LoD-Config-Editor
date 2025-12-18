@@ -119,7 +119,7 @@
       />
     {/if}
 
-    <span>{$t(label.toLowerCase())}</span>
+    <span>{$t(label)}</span>
   </label>
 </Base>
 

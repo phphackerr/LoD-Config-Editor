@@ -134,7 +134,7 @@ func (u *Updater) CheckForComponentUpdates() ([]ComponentUpdate, error) {
 				Type:      "theme",
 				Name:      name,
 				Version:   remoteInfo.Version,
-				Changelog: remoteInfo.Changelog,
+				Changelog: string(remoteInfo.Changelog),
 			})
 		}
 	}
@@ -147,7 +147,7 @@ func (u *Updater) CheckForComponentUpdates() ([]ComponentUpdate, error) {
 				Type:      "locale",
 				Name:      name,
 				Version:   remoteInfo.Version,
-				Changelog: remoteInfo.Changelog,
+				Changelog: string(remoteInfo.Changelog),
 			})
 		}
 	}
@@ -229,12 +229,12 @@ func (u *Updater) UpdateComponent(update ComponentUpdate) error {
 	if update.Type == "theme" {
 		local.Themes[update.Name] = version.ComponentInfo{
 			Version:   update.Version,
-			Changelog: update.Changelog,
+			Changelog: version.MultiLineString(update.Changelog),
 		}
 	} else {
 		local.Locales[update.Name] = version.ComponentInfo{
 			Version:   update.Version,
-			Changelog: update.Changelog,
+			Changelog: version.MultiLineString(update.Changelog),
 		}
 	}
 

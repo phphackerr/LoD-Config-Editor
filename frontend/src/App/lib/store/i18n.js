@@ -1,15 +1,13 @@
 //@ts-nocheck
 
-import { addMessages, init, locale } from "svelte-i18n";
-import {
-  GetTranslations,
-  GetCurrentLanguage,
-} from "/bindings/lce/backend/i18n/i18n";
+import { addMessages, init, locale } from 'svelte-i18n';
+import { GetTranslations, GetCurrentLanguage } from '/bindings/lce/backend/i18n/i18n';
 
 async function loadGoTranslations(lang) {
   try {
     const translations = await GetTranslations(lang);
     addMessages(lang, translations);
+    console.log(translations);
     locale.set(lang);
   } catch (e) {
     console.error(`Failed to load locale ${lang}:`, e);
@@ -17,17 +15,17 @@ async function loadGoTranslations(lang) {
 }
 
 export async function initGoI18n() {
-  console.log("init go i18n called");
-  let lang = "en";
+  console.log('init go i18n called');
+  let lang = 'en';
   try {
     lang = await GetCurrentLanguage();
-    console.log("lang: " + lang);
+    console.log('lang: ' + lang);
   } catch (e) {
-    console.warn("Не удалось получить язык из настроек, используем en");
+    console.warn('Не удалось получить язык из настроек, используем en');
   }
   init({
-    fallbackLocale: "en",
-    initialLocale: lang,
+    fallbackLocale: 'en',
+    initialLocale: lang
   });
   await loadGoTranslations(lang);
 }

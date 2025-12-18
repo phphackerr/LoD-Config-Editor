@@ -48,16 +48,16 @@
     <div class="centered-content-wrapper">
       {#each firstHalfKeys as key}
         <Checkbox
-          label={key}
+          label={`GAMEOPTIONS.${key.toLowerCase()}`}
           section={SECTION}
           option={key}
-          ttKey={`${key.toLowerCase()}_tooltip`}
+          ttKey={`GAMEOPTIONS.TOOLTIPS.${key.toLowerCase()}_tooltip`}
           ttPlace="left"
         />
       {/each}
 
       <Dropdown
-        label="announcer"
+        label="GAMEOPTIONS.announcer"
         section="HEROSETS"
         option="Announcer"
         options={['Default', 'Sexy', 'Anime']}
@@ -65,7 +65,7 @@
       />
 
       <Dropdown
-        label="blinkeffect"
+        label="GAMEOPTIONS.blinkeffect"
         section="HEROSETS"
         option="BlinkEffect"
         options={['Default', 'SF', 'Tinker']}
@@ -73,12 +73,12 @@
       />
 
       <Dropdown
-        label="membershipeffect"
+        label="GAMEOPTIONS.membershipeffect"
         section="HEROSETS"
         option="MembershipEffect"
         options={['Off', 'Amethyst', 'Silver', 'Gold']}
         options_keys={['off', 'amethyst', 'silver', 'gold']}
-        ttKey={'Membershipeffect_tooltip'.toLowerCase()}
+        ttKey={'GAMEOPTIONS.TOOLTIPS.membershipeffect_tooltip'}
       />
     </div>
   </div>
@@ -88,17 +88,17 @@
     <div class="centered-content-wrapper">
       {#each secondHalfKeys as key}
         <Checkbox
-          label={key}
+          label={`GAMEOPTIONS.${key.toLowerCase()}`}
           section={SECTION}
           option={key}
-          ttKey={`${key.toLowerCase()}_tooltip`}
+          ttKey={`GAMEOPTIONS.TOOLTIPS.${key.toLowerCase()}_tooltip`}
           ttPlace="left"
           reverted={key === 'DoubleClickHelperDisabled'}
         />
       {/each}
 
       <ColorPicker
-        label="customchatmessagescolor"
+        label="GAMEOPTIONS.customchatmessagescolor"
         section="HEROSETS"
         option="CustomChatMessagesColor"
       />

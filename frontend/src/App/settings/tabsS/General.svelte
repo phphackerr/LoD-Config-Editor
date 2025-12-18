@@ -58,12 +58,12 @@
   }
 </script>
 
-<ScannerOverlay show={isLoadingPaths} text={$t('scanning')} />
+<ScannerOverlay show={isLoadingPaths} text={$t('SETTING.GENERAL.scanning')} />
 
 {#if !isLoadingPaths}
   <div class="general-settings">
     {#if gamePathOptions.length > 0}
-      <h3 class="choose-text">{$t('select_path')}</h3>
+      <h3 class="choose-text">{$t('SETTING.GENERAL.select_path')}</h3>
       <Radio
         options={gamePathOptions}
         name="game-path-selector"
@@ -72,9 +72,9 @@
       />
     {:else}
       <p class="not-found">
-        {$t('paths_not_found')}
+        {$t('SETTING.GENERAL.paths_not_found')}
         <button class="run-scanner-button" on:click={handleRunScanner}>
-          {$t('run_scanner')}
+          {$t('SETTING.GENERAL.run_scanner')}
         </button>
       </p>
     {/if}

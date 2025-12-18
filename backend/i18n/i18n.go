@@ -170,7 +170,7 @@ func flattenJSON(prefix string, value interface{}, result map[string]string) {
 			// The original code lowercased keys, so we'll keep that behavior for the last segment?
 			// Or better, lowercase the whole key to be case-insensitive?
 			// Let's stick to the original logic: lowercasing keys.
-			newKey = strings.ToLower(newKey)
+			// newKey = strings.ToLower(newKey) // Removed to preserve case for nested keys like TITLE.window_title
 			
 			switch val := v.(type) {
 			case map[string]interface{}:

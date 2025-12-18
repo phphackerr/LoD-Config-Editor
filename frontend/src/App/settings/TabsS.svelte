@@ -1,12 +1,12 @@
 <script>
   // @ts-nocheck
-  import { onMount } from "svelte";
-  import { t } from "svelte-i18n";
+  import { onMount } from 'svelte';
+  import { t } from 'svelte-i18n';
 
   // Импортируем все компоненты из папки tabs
-  const tabs = import.meta.glob("./tabsS/*.svelte", { eager: true });
+  const tabs = import.meta.glob('./tabsS/*.svelte', { eager: true });
 
-  let activeTab = "";
+  let activeTab = '';
   let tabComponents = [];
 
   // Загружаем табы и их метаданные
@@ -15,12 +15,12 @@
       .map(([path, module]) => {
         const component = module.default;
         const metadata = module.tabMetadata || {};
-        const id = path.split("/").pop().replace(".svelte", "");
+        const id = path.split('/').pop().replace('.svelte', '');
         return {
           id,
           order: metadata.order || 999,
           component,
-          icon: metadata.icon,
+          icon: metadata.icon
         };
       })
       .sort((a, b) => a.order - b.order);
@@ -31,8 +31,8 @@
     ) {
       activeTab = tabComponents[0].id;
     } else if (tabComponents.length === 0) {
-      activeTab = "";
-      console.warn("No tab components found!");
+      activeTab = '';
+      console.warn('No tab components found!');
     }
   }
 
@@ -50,25 +50,18 @@
 <div class="tabs-container">
   <div class="tab-bar">
     {#each tabComponents as { id, icon } (id)}
-      <button
-        class="tab-btn"
-        class:active={activeTab === id}
-        on:click={() => openTab(id)}
-      >
+      <button class="tab-btn" class:active={activeTab === id} on:click={() => openTab(id)}>
         {#if icon}
           <span class="tab-icon">{@html icon}</span>
         {/if}
-        <span class="tab-label">{$t(`${id.toLowerCase()}_tab`)}</span>
+        <span class="tab-label">{$t(`SETTING.${id.toUpperCase()}.${id.toLowerCase()}_tab`)}</span>
       </button>
     {/each}
   </div>
 
   <div class="tab-content-wrapper">
     {#each tabComponents as { id, component: TabComponent } (id)}
-      <div
-        class="tab-content"
-        style="display: {activeTab === id ? 'block' : 'none'};"
-      >
+      <div class="tab-content" style="display: {activeTab === id ? 'block' : 'none'};">
         <TabComponent />
       </div>
     {/each}

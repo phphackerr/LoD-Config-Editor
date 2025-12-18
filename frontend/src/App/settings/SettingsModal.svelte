@@ -22,7 +22,7 @@
       transition:scale={{ duration: 200, start: 0.95 }}
     >
       <div class="modal-header">
-        <h2>{$t('settings_tooltip')}</h2>
+        <h2>{$t('TITLE.settings_tooltip')}</h2>
         <button class="close-btn" on:click={closeSettings}>
           <div class="icon-wrapper">
             <CloseIc />

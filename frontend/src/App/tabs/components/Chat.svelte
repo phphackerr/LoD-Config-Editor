@@ -66,7 +66,7 @@
       on:input={(e) => handleChange(e, configAvailable)}
       disabled={!configAvailable}
       style="flex: 1;"
-      placeholder={$t(label.toLowerCase())}
+      placeholder={$t(label)}
     />
   {:else}
     <div class="chat-control-row">
@@ -77,7 +77,7 @@
         on:input={(e) => handleChange(e, configAvailable)}
         disabled={!configAvailable}
         style="flex: 1;"
-        placeholder={$t(label.toLowerCase())}
+        placeholder={$t(label)}
       />
       {#if hotkeyOption}
         <HotkeyButton

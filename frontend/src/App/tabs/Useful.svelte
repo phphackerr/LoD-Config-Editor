@@ -169,7 +169,7 @@
   }
 
   function formatSize(bytes) {
-    if (bytes === 0 || bytes === undefined) return $t('unknown');
+    if (bytes === 0 || bytes === undefined) return $t('USEFUL.unknown');
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -207,42 +207,42 @@
   <div class="content-wrapper">
     <!-- Левая колонка - загрузка карты -->
     <div class="map-downloader">
-      <h3>{$t('download_latest')}</h3>
+      <h3>{$t('USEFUL.download_latest')}</h3>
 
       {#if error}
-        <div class="error">{$t('error')}: {error}</div>
+        <div class="error">{$t('USEFUL.error')}: {error}</div>
       {/if}
 
       {#if mapInfo}
         <div class="map-info">
           <div class="info-row">
-            <span class="label">{$t('save_path')}:</span>
+            <span class="label">{$t('USEFUL.save_path')}:</span>
             <span class="value save-path" use:initTooltip>
-              {mapInfo.save_path || $t('unknown')}
+              {mapInfo.save_path || $t('USEFUL.unknown')}
             </span>
           </div>
           <div class="info-row">
-            <span class="label">{$t('map_version')}:</span>
+            <span class="label">{$t('USEFUL.map_version')}:</span>
             <span class="value version">{mapInfo.version}</span>
           </div>
           <div class="info-row">
-            <span class="label">{$t('map_date')}:</span>
+            <span class="label">{$t('USEFUL.map_date')}:</span>
             <span class="value">{mapInfo.date}</span>
           </div>
           <div class="info-row">
-            <span class="label">{$t('map_size')}:</span>
+            <span class="label">{$t('USEFUL.map_size')}:</span>
             <span class="value">
               {#if mapInfo.size !== undefined && mapInfo.size !== null}
                 {formatSize(mapInfo.size)}
               {:else}
-                {$t('unknown')}
+                {$t('USEFUL.unknown')}
               {/if}
             </span>
           </div>
           <div class="info-row">
-            <span class="label">{$t('map_status')}:</span>
+            <span class="label">{$t('USEFUL.map_status')}:</span>
             <span class="value status" class:downloaded={mapInfo.is_downloaded}>
-              {mapInfo.is_downloaded ? $t('downloaded') : $t('not_downloaded')}
+              {mapInfo.is_downloaded ? $t('USEFUL.downloaded') : $t('USEFUL.not_downloaded')}
             </span>
           </div>
         </div>
@@ -264,12 +264,12 @@
         <button on:click={downloadMap} disabled={loading} class="download-btn">
           {#if loading}
             {#if downloadProgress > 0 && downloadProgress < 100}
-              {$t('downloading')} ({downloadProgress.toFixed(0)}%)
+              {$t('USEFUL.downloading')} ({downloadProgress.toFixed(0)}%)
             {:else}
-              {$t('loading')}...
+              {$t('USEFUL.loading')}...
             {/if}
           {:else}
-            {$t('download')}
+            {$t('USEFUL.download')}
           {/if}
         </button>
       {:else if !loading}
@@ -277,14 +277,14 @@
           {#if !$appSettings.game_path}
             <p>{$t('config_not_found')}</p>
           {:else}
-            <p>{$t('map_not_found')}</p>
+            <p>{$t('USEFUL.map_not_found')}</p>
           {/if}
         </div>
       {/if}
 
       {#if loading && !mapInfo && !error}
         <div class="loading">
-          {$t('loading_map_info')}...
+          {$t('USEFUL.loading_map_info')}...
         </div>
       {/if}
     </div>
@@ -292,7 +292,7 @@
     <!-- Правая колонка - чейнджлог -->
     <div class="changelog-panel">
       <div class="changelog-header">
-        <h3>{$t('changelog')}:</h3>
+        <h3>{$t('USEFUL.changelog')}:</h3>
         {#if mapInfo}
           <span class="version-badge">{formatVersion(mapInfo.version)}</span>
         {/if}

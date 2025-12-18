@@ -110,7 +110,7 @@
     </div>
     <div class="content {Object.keys(diff).length ? '' : 'no-changes'}" class:visible={isHovered}>
       {#if Object.keys(diff).length}
-        <div class="headline">{$t('external_changes')}:</div>
+        <div class="headline">{$t('WATCHER.external_changes')}:</div>
         <hr />
         <div class="diff-text">
           {#each Object.entries(diff) as [section, keys]}
@@ -136,15 +136,15 @@
         </div>
         <div class="footer">
           <button class="button" on:click={acceptChanges}>
-            <span class="button-text">{$t('accept_changes')}</span>
+            <span class="button-text">{$t('WATCHER.accept_changes')}</span>
           </button>
           <button class="button" on:click={disacrdChanges}>
-            <span class="button-text">{$t('discard_changes')}</span>
+            <span class="button-text">{$t('WATCHER.discard_changes')}</span>
           </button>
         </div>
       {:else}
         <div class="eyes"></div>
-        <span>{$t('watcher_working')}</span>
+        <span>{$t('WATCHER.watcher_working')}</span>
       {/if}
     </div>
   </div>

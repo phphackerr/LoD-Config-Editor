@@ -7,27 +7,27 @@
     {
       id: 'DisplayScoreboard',
       icon: 'BTNSkillSlot.png',
-      label: 'display_scoreboard'
+      label: 'HOTKEYS.display_scoreboard'
     },
     {
       id: 'SelectAllUnits',
       icon: 'BTNSkillSlot.png',
-      label: 'select_all_units'
+      label: 'HOTKEYS.select_all_units'
     },
     {
       id: 'SelectAllOtherUnits',
       icon: 'BTNSkillSlot.png',
-      label: 'select_all_other_units'
+      label: 'HOTKEYS.select_all_other_units'
     },
     {
       id: 'DisplayNeutralsSpawnAreaHotkey',
       icon: 'BTNSkillSlot.png',
-      label: 'display_neutrals_spawn_area'
+      label: 'HOTKEYS.display_neutrals_spawn_area'
     },
     {
       id: 'DisplayTowerRangeHotkey',
       icon: 'BTNSkillSlot.png',
-      label: 'display_tower_range'
+      label: 'HOTKEYS.display_tower_range'
     }
   ]);
 
@@ -64,7 +64,7 @@
 </script>
 
 <div class="panel">
-  <div class="header"><span>{$t('other_hotkeys')}</span></div>
+  <div class="header"><span>{$t('HOTKEYS.other_hotkeys')}</span></div>
   <div class="content">
     <div class="right-panel-content">
       <!-- Левая колонка с утилитами -->
@@ -100,29 +100,29 @@
         <!-- Чекбоксы -->
         <div class="checkbox-group">
           <Checkbox
-            label="ShopsQWERTY"
+            label="HOTKEYS.ShopsQWERTY"
             section="HOTKEYS"
             option="ShopsQWERTY"
-            ttKey="shops_qwer_tooltip"
+            ttKey="HOTKEYS.TOOLTIPS.shops_qwer_tooltip"
             ttImage="/tooltips/shop-qwer.png"
           />
           <Checkbox
-            label="UseDefaultCourierHotkeys"
+            label="HOTKEYS.UseDefaultCourierHotkeys"
             section="HOTKEYS"
             option="UseDefaultCourierHotkeys"
           />
           <Checkbox
-            label="UseDefaultCircleHotkeys"
+            label="HOTKEYS.UseDefaultCircleHotkeys"
             section="HOTKEYS"
             option="UseDefaultCircleHotkeys"
           />
           <Checkbox
-            label="DisableDefaultAltHotkeys"
+            label="HOTKEYS.DisableDefaultAltHotkeys"
             section="HOTKEYS"
             option="DisableDefaultAltHotkeys"
           />
           <Checkbox
-            label="DisableAllDefaultHotkeys"
+            label="HOTKEYS.DisableAllDefaultHotkeys"
             section="HOTKEYS"
             option="DisableAllDefaultHotkeys"
           />

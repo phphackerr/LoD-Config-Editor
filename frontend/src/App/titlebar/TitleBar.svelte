@@ -12,7 +12,7 @@
 <div class="titlebar" on:dblclick={Window.ToggleMaximise} role="presentation">
   <div class="logo">
     <img src={icon} class="icon" alt="icon" />
-    <span class="span-text">{$t('window_title')}</span>
+    <span class="span-text">{$t('TITLE.window_title')}</span>
   </div>
   <div class="titlebar-center">
     <Search />
@@ -22,7 +22,7 @@
       type="button"
       class="titlebar-button"
       on:click={openSettings}
-      use:tt={{ content: $t('settings_tooltip') }}
+      use:tt={{ content: $t('TITLE.settings_tooltip') }}
       aria-label="Settings"
     >
       <div class="button-icon">
@@ -33,7 +33,7 @@
       class="titlebar-button"
       id="titlebar-minimize"
       on:click={Window.Minimise}
-      use:tt={{ content: $t('minimize_tooltip') }}
+      use:tt={{ content: $t('TITLE.minimize_tooltip') }}
       aria-label="Minimize"
     >
       <div class="button-icon">
@@ -44,7 +44,7 @@
       class="titlebar-button"
       id="titlebar-maximize"
       on:click={Window.ToggleMaximise}
-      use:tt={{ content: $t('maximize_tooltip') }}
+      use:tt={{ content: $t('TITLE.maximize_tooltip') }}
       aria-label="Maximize"
     >
       <div class="button-icon">
@@ -56,7 +56,7 @@
       id="titlebar-close"
       on:click={Application.Quit}
       aria-label="Close"
-      use:tt={{ content: $t('close_tooltip') }}
+      use:tt={{ content: $t('TITLE.close_tooltip') }}
     >
       <div class="button-icon close-svg">
         <CloseIc />

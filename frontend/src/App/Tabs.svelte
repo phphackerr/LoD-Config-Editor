@@ -48,7 +48,7 @@
       {#if icon}
         <span class="tab-icon">{@html icon}</span>
       {/if}
-      <span class="tab-label">{$t(`${id.toLowerCase()}_tab`)}</span>
+      <span class="tab-label">{$t(`${id.toUpperCase()}.${id.toLowerCase()}_tab`)}</span>
     </button>
   {/each}
 </div>

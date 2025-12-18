@@ -5,7 +5,7 @@
   import Watcher from './App/footer/Watcher.svelte';
   import Actions from './App/footer/Actions.svelte';
   import ConfigNotification from './App/ConfigNotification.svelte';
-  import UpdaterNotification from './App/footer/UpdaterNotification.svelte';
+  import UpdaterNotification from './App/UpdaterNotification.svelte';
   import { onMount } from 'svelte';
   import { appSettings } from './App/lib/store/appSettings';
   import { openSettings, isSettingsOpen } from './App/lib/store/settingsModal';

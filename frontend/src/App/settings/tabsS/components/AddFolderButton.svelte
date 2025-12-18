@@ -50,7 +50,7 @@
 <button
   class="fab-add-button"
   on:click={handleAddPathClick}
-  use:tt={{ content: $t('add_folder_tooltip') }}
+  use:tt={{ content: $t('SETTING.GENERAL.add_folder_tooltip') }}
 >
   +
 </button>

@@ -22,7 +22,7 @@
 
   function startCapture() {
     isCapturing = true;
-    displayText = $t('press_any_key');
+    displayText = $t('HOTKEYS.press_any_key');
     // Сбрасываем состояние при каждом новом захвате
     activeModifiers = { ctrl: false, alt: false, shift: false };
     hasNonModifierBeenPressed = false;
@@ -31,14 +31,14 @@
 
   function stopCapture() {
     isCapturing = false;
-    displayText = $t('press_any_key');
+    displayText = $t('HOTKEYS.press_any_key');
     onclose?.();
   }
 
   async function clearHotkey() {
     isInternalChange.mark();
     await setConfigValue(section, option, '');
-    displayText = $t('press_any_key');
+    displayText = $t('HOTKEYS.press_any_key');
     stopCapture();
   }
 
@@ -95,7 +95,7 @@
       // Нажата только модификаторная клавиша (или модификатор, который уже был зажат)
       // Обновляем только отображаемый текст
       lastRecordedModifierDisplay = getModifierDisplayString(); // Сохраняем для возможного последующего keyup
-      displayText = lastRecordedModifierDisplay || $t('press_any_key');
+      displayText = lastRecordedModifierDisplay || $t('HOTKEYS.press_any_key');
     }
   }
 
@@ -144,7 +144,7 @@
       // или это была одиночная модификаторная клавиша, которая была отпущена,
       // и нам просто нужно обновить отображение
       lastRecordedModifierDisplay = currentModifierDisplay; // Обновляем для возможного следующего keyup
-      displayText = currentModifierDisplay || $t('press_any_key');
+      displayText = currentModifierDisplay || $t('HOTKEYS.press_any_key');
     }
     // Если это keyup не-модификатора (и hasNonModifierBeenPressed == false),
     // это значит, что этот не-модификатор не был обработан в keydown (что странно)
@@ -172,7 +172,7 @@
   >
     <div class="modal-content" on:click|stopPropagation role="presentation">
       <div class="modal-header">
-        <h3>{$t('capture_modal_label')}</h3>
+        <h3>{$t('HOTKEYS.capture_modal_label')}</h3>
       </div>
       <div class="modal-body">
         <div
@@ -185,8 +185,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="clear-button" on:click={clearHotkey}>{$t('clear_button')}</button>
-        <button on:click={stopCapture}>{$t('cancel_button')}</button>
+        <button class="clear-button" on:click={clearHotkey}>{$t('HOTKEYS.clear_button')}</button>
+        <button on:click={stopCapture}>{$t('HOTKEYS.cancel_button')}</button>
       </div>
     </div>
   </div>

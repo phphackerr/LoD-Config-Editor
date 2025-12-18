@@ -88,7 +88,7 @@
   {/if}
 
   <label class="dropdown" class:disabled={!configAvailable}>
-    <span>{$t(label.toLowerCase())}</span>
+    <span>{$t(label)}</span>
 
     {#if value !== undefined}
       <!-- Controlled mode -->

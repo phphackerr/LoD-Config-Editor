@@ -68,7 +68,7 @@
     <div class="top-row">
       <Checkbox
         bind:checked={isHpBarsEnabled}
-        label="DotA2HPBars"
+        label="HPBARS.DotA2HPBars"
         section={GAME_SECTION}
         option="DotA2HPBars"
       />
@@ -78,7 +78,7 @@
     {#if isHpBarsEnabled}
       <div class="middle-row">
         <Dropdown
-          label="CustomBarPresetNumber"
+          label="HPBARS.CustomBarPresetNumber"
           section={SECTION}
           option="CustomBarPresetNumber"
           options={[
@@ -95,11 +95,11 @@
           bind:value={customPreset}
         />
         <Checkbox
-          label="CustomBarFixedSides"
+          label="HPBARS.CustomBarFixedSides"
           section={SECTION}
           option="CustomBarFixedSides"
           visible={true}
-          ttKey={'CustomBarFixedSides_tooltip'.toLowerCase()}
+          ttKey={'HPBARS.TOOLTIPS.CustomBarFixedSides_tooltip'}
         />
       </div>
     {/if}
@@ -109,12 +109,12 @@
       <div class="bottom-row">
         <div class="color-pickers-column">
           {#each firstHalfKeys as key}
-            <ColorPicker label={key} section={SECTION} option={key} visible={true} />
+            <ColorPicker label={`HPBARS.${key}`} section={SECTION} option={key} visible={true} />
           {/each}
         </div>
         <div class="color-pickers-column">
           {#each secondHalfKeys as key}
-            <ColorPicker label={key} section={SECTION} option={key} visible={true} />
+            <ColorPicker label={`HPBARS.${key}`} section={SECTION} option={key} visible={true} />
           {/each}
         </div>
       </div>

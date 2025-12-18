@@ -9,9 +9,27 @@ import (
 	"strings"
 )
 
+type MultiLineString string
+
+func (m *MultiLineString) UnmarshalJSON(data []byte) error {
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		*m = MultiLineString(single)
+		return nil
+	}
+
+	var multi []string
+	if err := json.Unmarshal(data, &multi); err == nil {
+		*m = MultiLineString(strings.Join(multi, "\n"))
+		return nil
+	}
+
+	return nil
+}
+
 type ComponentInfo struct {
-	Version   string `json:"version"`
-	Changelog string `json:"changelog,omitempty"`
+	Version   string          `json:"version"`
+	Changelog MultiLineString `json:"changelog,omitempty"`
 }
 
 type Manifest struct {

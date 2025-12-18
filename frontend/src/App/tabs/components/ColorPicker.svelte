@@ -89,7 +89,7 @@
         isAlpha={false}
         format="hex"
         disableTextInput={!configAvailable}
-        label={$t(label.toLowerCase())}
+        label={$t(label)}
       />
     {:else}
       <span>Loading color picker...</span>

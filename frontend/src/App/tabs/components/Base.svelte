@@ -32,7 +32,7 @@
   // Регистрация в поиске
   $: if (element) {
     searchableItems.update(id, {
-      label: $t(label.toLowerCase()),
+      label: $t(label),
       element,
       tabId
     });
@@ -48,7 +48,7 @@
   onMount(() => {
     searchableItems.register({
       id,
-      label: $t(label.toLowerCase()),
+      label: $t(label),
       element,
       tabId
     });

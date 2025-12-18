@@ -7,9 +7,9 @@
   let radioState = $state('cast'); // ← состояние радио
 
   const commnadRadioOptions = [
-    { value: 'cast', label: 'Cast' },
-    { value: 'quickcast', label: 'Quickcast' },
-    { value: 'autocast', label: 'Autocast' }
+    { value: 'cast', label: 'HOTKEYS.cast' },
+    { value: 'quickcast', label: 'HOTKEYS.quickcast' },
+    { value: 'autocast', label: 'HOTKEYS.autocast' }
   ];
 
   function resolveButton(slotId, radio) {
@@ -26,7 +26,7 @@
 </script>
 
 <div class="panel">
-  <div class="header"><span>{$t('command_panel')}</span></div>
+  <div class="header"><span>{$t('HOTKEYS.command_panel')}</span></div>
   <div class="content">
     <div class="radio">
       <!-- привязываем радио к состоянию -->

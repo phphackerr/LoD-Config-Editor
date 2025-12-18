@@ -81,7 +81,7 @@
       class="btn hidden"
       class:visible={hovered || focused}
       on:click={openFolder}
-      use:tt={{ content: $t('open_game_folder'), placement: 'top' }}
+      use:tt={{ content: $t('FOOTER.open_game_folder'), placement: 'top' }}
       bind:this={folderBtn}>🗁</button
     >
     <button
@@ -89,7 +89,7 @@
       on:mouseenter={() => (hovered = true)}
       on:focusin={() => (focused = true)}
       on:click={launchGame}
-      use:tt={{ content: $t('launch_game'), placement: 'top' }}
+      use:tt={{ content: $t('FOOTER.launch_game'), placement: 'top' }}
       bind:this={launchBtn}>▷</button
     >
   {/if}

@@ -26,7 +26,7 @@
   <div class="notification">
     <div class="notification-content">
       <span>{$t('config_not_found')}</span>
-      <button onclick={openSettings}>{$t('select_path')}</button>
+      <button onclick={openSettings}>{$t('SETTING.GENERAL.select_path')}</button>
     </div>
   </div>
 {/if}
