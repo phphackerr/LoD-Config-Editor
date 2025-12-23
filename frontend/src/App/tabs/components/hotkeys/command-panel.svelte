@@ -2,7 +2,7 @@
   import { t } from 'svelte-i18n';
   import Radio from './radio.svelte';
   import HotkeyButton from './hotkey-button.svelte';
-  import { gridLayout, allButtons, skillRules } from './buttons';
+  import { gridLayout, allButtons, skillRules, extraRules } from './buttons';
 
   let radioState = $state('cast'); // ← состояние радио
 
@@ -14,6 +14,13 @@
 
   function resolveButton(slotId, radio) {
     if (!slotId) return null;
+
+    if (extraRules[slotId]) {
+      const rule = extraRules[slotId];
+      const targetId = rule.any || rule[radio];
+      return allButtons[targetId] || null;
+    }
+
     if (slotId.startsWith('SkillSlot')) {
       return skillRules[radio](slotId);
     }
@@ -42,6 +49,7 @@
                 option={button.id}
                 imageSrc={`htk_icons/${button.icon}`}
                 disabled={button.disabled || false}
+                ttKey={button.tooltip}
               />
             {:else}
               <div class="empty-slot"></div>

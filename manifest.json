@@ -1,10 +1,7 @@
 {
   "app_version": {
-    "version": "0.9.3",
-    "changelog": [
-      "• Fixed display of translations",
-      "• Improved updater and updater notification"
-    ]
+    "version": "0.9.4",
+    "changelog": ["• Returned extra slots"]
   },
   "themes": {
     "default": {

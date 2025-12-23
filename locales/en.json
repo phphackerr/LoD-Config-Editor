@@ -8,12 +8,6 @@
     "maximize_tooltip": "Maximize",
     "close_tooltip": "Close"
   },
-  "WATCHER": {
-    "external_changes": "External changes",
-    "accept_changes": "Accept changes",
-    "discard_changes": "Discard changes",
-    "watcher_working": "Working"
-  },
   "SETTING": {
     "settings": "Settings",
     "GENERAL": {
@@ -42,11 +36,6 @@
     "thanks": "Many thanks to everyone who helps the project",
     "joinOurDiscord": "Join our discord"
   },
-  "ACTIONS": {
-    "open_game_folder": "Open game folder",
-    "launch_game": "Launch game",
-    "open_config": "Open config manually"
-  },
   "HOTKEYS": {
     "hotkeys_tab": "HOTKEYS",
     "command_panel": "Command Panel",
@@ -73,6 +62,36 @@
     "capture_modal_label": "Setting hotkey",
     "press_any_key": "Press any key (backspace for clear)",
     "TOOLTIPS": {
+      "ExtraSlot1": "For nothing",
+      "ExtraSlot2": "Extra slot 2",
+      "ExtraSlot3": "Extra slot 3",
+      "ExtraSlot5": "Extra slot 5",
+      "QuickCastExtraSlot2": "Quick-cast extra slot 2",
+      "QuickCastExtraSlot3": "Quick-cast extra slot 3",
+      "QuickCastExtraSlot5": "Quick-cast extra slot 5",
+      "AutoCastExtraSlot2": "Auto-cast extra slot 2",
+      "AutoCastExtraSlot3": "Auto-cast extra slot 3",
+      "AutoCastExtraSlot5": "Auto-cast extra slot 5",
+      "BindAttack": "Attack",
+      "BindOpenHeroSkills": "Open hero skills",
+      "SkillSlot1": "Skill slot 1",
+      "SkillSlot2": "Skill slot 2",
+      "SkillSlot3": "Skill slot 3",
+      "SkillSlot4": "Skill slot 4",
+      "SkillSlot5": "Skill slot 5",
+      "SkillSlot6": "Skill slot 6",
+      "QuickCastSlot1": "Quick-cast slot 1",
+      "QuickCastSlot2": "Quick-cast slot 2",
+      "QuickCastSlot3": "Quick-cast slot 3",
+      "QuickCastSlot4": "Quick-cast slot 4",
+      "QuickCastSlot5": "Quick-cast slot 5",
+      "QuickCastSlot6": "Quick-cast slot 6",
+      "ASkillSlot1": "Auto-cast slot 1",
+      "ASkillSlot2": "Auto-cast slot 2",
+      "ASkillSlot3": "Auto-cast slot 3",
+      "ASkillSlot4": "Auto-cast slot 4",
+      "ASkillSlot5": "Auto-cast slot 5",
+      "ASkillSlot6": "Auto-cast slot 6",
       "click_for_bind": "Click for bind",
       "shops_qwer_tooltip": "Changes hotkeys for shopping to: <br> QWER <br> ASDF <br> ZXCV"
     }
@@ -248,5 +267,16 @@
     "map_not_found": "Map not found",
     "loading_map_info": "Loading map info",
     "changelog": "Changelog for"
+  },
+  "ACTIONS": {
+    "open_game_folder": "Open game folder",
+    "launch_game": "Launch game",
+    "open_config": "Open config manually"
+  },
+  "WATCHER": {
+    "external_changes": "External changes",
+    "accept_changes": "Accept changes",
+    "discard_changes": "Discard changes",
+    "watcher_working": "Working"
   }
 }

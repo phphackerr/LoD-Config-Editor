@@ -17,7 +17,7 @@
   export let disabled = false;
   export let ttKey = '';
   export let ttImage = '';
-  export let ttPlace = '';
+  export let ttPlace = 'top';
 
   let hotkeyValue = '';
   let showModal = false;
