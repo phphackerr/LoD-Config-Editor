@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 includes:
   common: ./build/Taskfile.yml
@@ -11,7 +11,7 @@ includes:
 vars:
   APP_NAME: "lce"
   BIN_DIR: "bin"
-  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  VITE_PORT: "{{.WAILS_VITE_PORT | default 9245}}"
 
 tasks:
   build:
@@ -38,3 +38,8 @@ tasks:
     summary: Builds Docker image for cross-compilation (~800MB download)
     cmds:
       - task: common:setup:docker
+
+  version:
+    summary: Bumps the application version
+    cmds:
+      - go run scripts/bump_version.go {{.V}}
