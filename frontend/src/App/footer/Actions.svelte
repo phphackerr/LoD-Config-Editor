@@ -74,14 +74,14 @@
       class="btn hidden"
       class:visible={hovered || focused}
       on:click={openConfig}
-      use:tt={{ content: $t('open_config'), placement: 'top' }}
+      use:tt={{ content: $t('ACTIONS.open_config'), placement: 'top' }}
       bind:this={configBtn}>🗎</button
     >
     <button
       class="btn hidden"
       class:visible={hovered || focused}
       on:click={openFolder}
-      use:tt={{ content: $t('FOOTER.open_game_folder'), placement: 'top' }}
+      use:tt={{ content: $t('ACTIONS.open_game_folder'), placement: 'top' }}
       bind:this={folderBtn}>🗁</button
     >
     <button
@@ -89,7 +89,7 @@
       on:mouseenter={() => (hovered = true)}
       on:focusin={() => (focused = true)}
       on:click={launchGame}
-      use:tt={{ content: $t('FOOTER.launch_game'), placement: 'top' }}
+      use:tt={{ content: $t('ACTIONS.launch_game'), placement: 'top' }}
       bind:this={launchBtn}>▷</button
     >
   {/if}

@@ -1,7 +1,8 @@
 <script>
   // @ts-nocheck
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
+  import { activeSettingsTab } from '../lib/store/settingsModal';
 
   // Импортируем все компоненты из папки tabs
   const tabs = import.meta.glob('./tabsS/*.svelte', { eager: true });
@@ -38,6 +39,21 @@
 
   onMount(() => {
     loadTabsAndComponents();
+    const unsubscribe = activeSettingsTab.subscribe((val) => {
+      if (val) {
+        // Проверяем, существует ли такой таб
+        const found = tabComponents.find((t) => t.id === val);
+        if (found) {
+          activeTab = val;
+        }
+        // Сбрасываем, чтобы при следующем открытии без аргументов открывался дефолтный (или последний) таб,
+        // или чтобы не переключало обратно при навигации.
+        // Но если мы сбросим сразу, то svelte может не успеть среагировать?
+        // Нет, синхронно должно быть ок.
+        activeSettingsTab.set('');
+      }
+    });
+    return unsubscribe;
   });
 
   function openTab(tabId) {
@@ -54,7 +70,7 @@
         {#if icon}
           <span class="tab-icon">{@html icon}</span>
         {/if}
-        <span class="tab-label">{$t(`SETTING.${id.toUpperCase()}.${id.toLowerCase()}_tab`)}</span>
+        <span class="tab-label">{$t(`SETTINGS.${id.toUpperCase()}.${id.toLowerCase()}_tab`)}</span>
       </button>
     {/each}
   </div>

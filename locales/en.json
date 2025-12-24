@@ -1,5 +1,6 @@
 {
   "lang_name": "English",
+  "author": "Vordik",
   "TITLE": {
     "window_title": "Lod Config Editor",
     "search": "Search",
@@ -8,10 +9,13 @@
     "maximize_tooltip": "Maximize",
     "close_tooltip": "Close"
   },
-  "SETTING": {
+  "SETTINGS": {
     "settings": "Settings",
     "GENERAL": {
-      "general_tab": "General",
+      "general_tab": "General"
+    },
+    "PATHS": {
+      "paths_tab": "Paths",
       "select_path": "Select path to game:",
       "add_folder_tooltip": "Add folder",
       "paths_not_found": "Paths not found. Please add path to configuration file or run scanner.",
@@ -28,13 +32,7 @@
     },
     "ABOUT": {
       "about_tab": "About"
-    },
-    "thanksToAutors": "Thanks to the authors of the translations",
-    "ruTranslation": "Russian language: Vordik",
-    "enTranslation": "English language: Vordik",
-    "esTranslation": "Spanish language: Zen",
-    "thanks": "Many thanks to everyone who helps the project",
-    "joinOurDiscord": "Join our discord"
+    }
   },
   "HOTKEYS": {
     "hotkeys_tab": "HOTKEYS",

@@ -19,7 +19,6 @@ type Settings struct {
 	FirstRun bool     `json:"first_run"` // NEW: Добавляем поле FirstRun
 	AllPaths         []string `json:"all_paths"` // NEW: Добавляем поле AllPaths
 	Theme            string   `json:"theme"`     // NEW: Добавляем поле Theme
-	ShowExtraHotkeys bool     `json:"show_extra_hotkeys"` // NEW: Добавляем поле ShowExtraHotkeys
 }
 
 // DefaultSettings возвращает настройки по умолчанию
@@ -32,7 +31,6 @@ func DefaultSettings() Settings {
 		FirstRun: true,       // NEW: Значение по умолчанию для FirstRun
 		AllPaths:         []string{}, // NEW: Значение по умолчанию для AllPaths
 		Theme:            "default",  // NEW: Значение по умолчанию для Theme
-		ShowExtraHotkeys: false,      // По умолчанию скрываем
 	}
 }
 
@@ -200,9 +198,6 @@ func (a *AppSettings) UpdateSettings(newSettings Settings) (Settings, error) {
 
 	a.settings = newSettings
 	fmt.Println("Настройки успешно сохранены")
-
-	// Эмитим событие об обновлении (если нужно для других частей системы)
-	a.app.Event.Emit("app-settings-updated", a.settings)
 
 	return a.settings, nil
 }

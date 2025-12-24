@@ -13,7 +13,7 @@
   onMount(() => {
     const unsubscribe = appSettings.subscribe((settings) => {
       if (settings.first_run) {
-        openSettings();
+        openSettings('Paths');
       }
     });
     return unsubscribe;

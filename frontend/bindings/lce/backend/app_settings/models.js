@@ -67,14 +67,6 @@ export class Settings {
              */
             this["theme"] = "";
         }
-        if (!("show_extra_hotkeys" in $$source)) {
-            /**
-             * NEW: Добавляем поле ShowExtraHotkeys
-             * @member
-             * @type {boolean}
-             */
-            this["show_extra_hotkeys"] = false;
-        }
 
         Object.assign(this, $$source);
     }

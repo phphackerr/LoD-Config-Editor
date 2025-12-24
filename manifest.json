@@ -1,7 +1,7 @@
 {
   "app_version": {
-    "version": "0.9.4",
-    "changelog": ["• Returned extra slots"]
+    "version": "0.9.5",
+    "changelog": ["• Switch language option returned"]
   },
   "themes": {
     "default": {
@@ -15,16 +15,16 @@
   },
   "locales": {
     "en": {
-      "version": "0.1.1",
-      "changelog": "Hotkeys"
+      "version": "0.1.2",
+      "changelog": "Update"
     },
     "ru": {
-      "version": "0.1.0",
-      "changelog": "Initial release"
+      "version": "0.1.1",
+      "changelog": "Update"
     },
     "es": {
-      "version": "0.1.0",
-      "changelog": "Initial release"
+      "version": "0.1.1",
+      "changelog": "Update"
     }
   }
 }

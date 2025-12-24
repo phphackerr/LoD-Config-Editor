@@ -1,7 +1,7 @@
 //@ts-nocheck
 
 import { addMessages, init, locale } from 'svelte-i18n';
-import { GetTranslations, GetCurrentLanguage } from '/bindings/lce/backend/i18n/i18n';
+import { GetTranslations, GetCurrentLanguage, GetLanguages } from '/bindings/lce/backend/i18n/i18n';
 
 async function loadGoTranslations(lang) {
   try {
@@ -11,6 +11,20 @@ async function loadGoTranslations(lang) {
     locale.set(lang);
   } catch (e) {
     console.error(`Failed to load locale ${lang}:`, e);
+  }
+}
+
+export async function changeLanguage(lang) {
+  await loadGoTranslations(lang);
+}
+
+export async function getAvailableLanguages() {
+  try {
+    const langs = await GetLanguages();
+    return langs;
+  } catch (e) {
+    console.error('Failed to get available languages:', e);
+    return [];
   }
 }
 
@@ -25,7 +39,14 @@ export async function initGoI18n() {
   }
   init({
     fallbackLocale: 'en',
-    initialLocale: lang
+    initialLocale: lang,
+    handleMissingMessage: ({ id }) => id
   });
-  await loadGoTranslations(lang);
+
+  // Всегда грузим английский как фоллбэк
+  await loadGoTranslations('en');
+
+  if (lang !== 'en') {
+    await loadGoTranslations(lang);
+  }
 }
