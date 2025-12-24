@@ -31,7 +31,18 @@
       "theme_tooltip": "Theme"
     },
     "ABOUT": {
-      "about_tab": "About"
+      "about_tab": "About",
+      "app_name": "LoD Config Editor",
+      "version": "Version",
+      "description": "A powerful configuration editor for Legend of DotA.",
+      "discord": "Join our Discord",
+      "online": "Online",
+      "total": "Total",
+      "github": "GitHub Repository",
+      "developer": "Developed by",
+      "translators": "Translators",
+      "thanks": "Special Thanks",
+      "thanksD": "Thanks to all who help the project"
     }
   },
   "HOTKEYS": {

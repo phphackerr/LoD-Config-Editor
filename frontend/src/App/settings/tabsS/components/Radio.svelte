@@ -139,6 +139,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis; /* Добавляет многоточие, если текст слишком длинный */
+    color: #d4cbcb;
   }
 
   .button {

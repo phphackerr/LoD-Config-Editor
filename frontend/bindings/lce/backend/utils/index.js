@@ -6,3 +6,7 @@ import * as Utils from "./utils.js";
 export {
     Utils
 };
+
+export {
+    DiscordInvite
+} from "./models.js";

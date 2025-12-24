@@ -83,9 +83,15 @@ func (i *I18N) GetLanguages() ([]map[string]string, error) {
 			name = langName
 		}
 
+		author := ""
+		if auth, ok := jsonMap["author"].(string); ok {
+			author = auth
+		}
+
 		langs = append(langs, map[string]string{
-			"code": code,
-			"name": name,
+			"code":   code,
+			"name":   name,
+			"author": author,
 		})
 	}
 

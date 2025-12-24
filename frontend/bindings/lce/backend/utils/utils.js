@@ -6,6 +6,27 @@
 // @ts-ignore: Unused imports
 import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
+/**
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetAppVersion() {
+    return $Call.ByID(287003546);
+}
+
+/**
+ * @param {string} inviteCode
+ * @returns {$CancellablePromise<$models.DiscordInvite | null>}
+ */
+export function GetDiscordStats(inviteCode) {
+    return $Call.ByID(1690288880, inviteCode).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
 /**
  * Запуск игры с аргументами
  * @param {string} path
@@ -32,3 +53,15 @@ export function OpenFile(path) {
 export function OpenFolderInExplorer(path) {
     return $Call.ByID(3950432153, path);
 }
+
+/**
+ * @param {string} url
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenURL(url) {
+    return $Call.ByID(3202016086, url);
+}
+
+// Private type creation functions
+const $$createType0 = $models.DiscordInvite.createFrom;
+const $$createType1 = $Create.Nullable($$createType0);

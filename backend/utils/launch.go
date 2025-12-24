@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"lce/backend/version"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -104,4 +107,38 @@ func (g *Utils) OpenFile(path string) error {
 		return fmt.Errorf("ошибка запуска команды: %w", err)
 	}
 	return nil
+}
+
+func (g *Utils) GetAppVersion() string {
+	return version.App.Version
+}
+
+func (g *Utils) OpenURL(url string) error {
+	cmd := exec.Command("cmd", "/C", "start", "", url)
+	return cmd.Start()
+}
+
+type DiscordInvite struct {
+	ApproximatePresenceCount int `json:"approximate_presence_count"`
+	ApproximateMemberCount   int `json:"approximate_member_count"`
+}
+
+func (g *Utils) GetDiscordStats(inviteCode string) (*DiscordInvite, error) {
+	url := fmt.Sprintf("https://discord.com/api/v9/invites/%s?with_counts=true", inviteCode)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("discord api returned status: %d", resp.StatusCode)
+	}
+
+	var invite DiscordInvite
+	if err := json.NewDecoder(resp.Body).Decode(&invite); err != nil {
+		return nil, err
+	}
+
+	return &invite, nil
 }

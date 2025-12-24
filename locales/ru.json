@@ -31,14 +31,19 @@
       "theme_tooltip": "Тема"
     },
     "ABOUT": {
-      "about_tab": "О программе"
-    },
-    "thanksToAutors": "Спасибо авторам переводов",
-    "ruTranslation": "Русский язык: Vordik",
-    "enTranslation": "Английский язык: Vordik",
-    "esTranslation": "Испанский язык: Zen",
-    "thanks": "Большое спасибо всем, кто помогает проекту",
-    "joinOurDiscord": "Присоединяйтесь к нашему Discord"
+      "about_tab": "О программе",
+      "app_name": "LoD Config Editor",
+      "version": "Версия",
+      "description": "Мощный редактор конфигурации для Legend of DotA.",
+      "discord": "Наш Discord",
+      "online": "В сети",
+      "total": "Всего",
+      "github": "GitHub репозиторий",
+      "developer": "Разработчик",
+      "translators": "Переводчики",
+      "thanks": "Благодарности",
+      "thanksD": "Большое спасибо всем, кто помогает проекту"
+    }
   },
   "HOTKEYS": {
     "hotkeys_tab": "ХОТКЕИ",
