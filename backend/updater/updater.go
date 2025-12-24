@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -229,7 +230,12 @@ func CleanupOldExecutables() {
 		if strings.HasPrefix(strings.ToLower(name), "lce_v") && strings.HasSuffix(strings.ToLower(name), ".exe") {
 			oldPath := filepath.Join(exeDir, name)
 			// Try to remove
-			_ = os.Remove(oldPath)
+			err := os.Remove(oldPath)
+			if err != nil {
+				// One retry attempt
+				time.Sleep(2 * time.Second)
+				_ = os.Remove(oldPath)
+			}
 		}
 		
 		// Also clean up .old files just in case

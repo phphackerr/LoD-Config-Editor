@@ -1,7 +1,7 @@
 {
   "app_version": {
-    "version": "0.9.5",
-    "changelog": ["• Switch language option returned"]
+    "version": "0.9.6",
+    "changelog": ["• (fix) Changed updater logic "]
   },
   "themes": {
     "default": {
