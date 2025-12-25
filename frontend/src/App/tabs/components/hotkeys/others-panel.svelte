@@ -34,15 +34,15 @@
   const utilityButtons = [
     {
       id: 'SelectBestCourier',
-      icon: 'BTNCour.png'
+      icon: 'Cour.png'
     },
     {
       id: 'SelectCircleOfPower',
-      icon: 'BTNCircle.png'
+      icon: 'Circle.png'
     },
     {
       id: 'TeleportScrollHotkey',
-      icon: 'BTNTp.png'
+      icon: 'Tp.png'
     },
     {
       id: 'ObserverWardHotkey',
@@ -59,6 +59,14 @@
     {
       id: 'SmokeHotkey',
       icon: 'Smoke.png'
+    },
+    {
+      id: 'GlyphHotkey',
+      icon: 'Glyph.png'
+    },
+    {
+      id: 'ScanHotkey',
+      icon: 'Scan.png'
     }
   ];
 </script>

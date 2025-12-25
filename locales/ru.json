@@ -34,6 +34,8 @@
       "about_tab": "О программе",
       "app_name": "LoD Config Editor",
       "version": "Версия",
+      "check_for_updates": "Проверить обновления",
+      "up_to_date": "Версия актуальна",
       "description": "Мощный редактор конфигурации для Legend of DotA.",
       "discord": "Наш Discord",
       "online": "В сети",
@@ -287,5 +289,15 @@
     "accept_changes": "Принять изменения",
     "discard_changes": "Отклонить изменения",
     "watcher_working": "Работает"
+  },
+  "UPDATER": {
+    "update_available": "Доступно обновление",
+    "changelog": "Список изменений",
+    "update_ready": "Загрузка завершена!",
+    "restart_now": "Перезапустить сейчас",
+    "update_now": "Обновить сейчас",
+    "component_updates": "Обновления компонентов",
+    "update": "Обновить",
+    "downloading_progress": "Загрузка..."
   }
 }

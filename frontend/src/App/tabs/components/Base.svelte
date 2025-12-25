@@ -15,17 +15,25 @@
   export let className = '';
   export let style = '';
 
+  export let section = '';
+  export let option = '';
+
   let element;
   const id = Symbol();
 
   let configAvailable = false;
   let configData = null;
+  let keyMissing = false;
 
   let tooltipContent = null;
   $: {
     const items = [];
-    if (ttKey) items.push({ key: $t(ttKey) });
-    if (ttImage) items.push({ image: ttImage });
+    if (keyMissing) {
+      items.push({ key: `Key not found: [${section}] ${option}`, color: '#ff4444' });
+    } else {
+      if (ttKey) items.push({ key: $t(ttKey) });
+      if (ttImage) items.push({ image: ttImage });
+    }
     tooltipContent = buildTooltipContent(items);
   }
 
@@ -43,6 +51,41 @@
     const storeValue = $configStore;
     configAvailable = !!storeValue?.path && storeValue.error === null;
     configData = storeValue?.data;
+
+    // Check if key exists (case-insensitive)
+    if (configAvailable && section && option && configData) {
+      if (option === 'ExtraSlot1') {
+        keyMissing = false;
+      } else {
+        const sectionLower = section.toLowerCase();
+        const optionLower = option.toLowerCase();
+
+        let foundSection = null;
+        // Find section case-insensitively
+        for (const secKey of Object.keys(configData)) {
+          if (secKey.toLowerCase() === sectionLower) {
+            foundSection = configData[secKey];
+            break;
+          }
+        }
+
+        if (!foundSection) {
+          keyMissing = true;
+        } else {
+          // Find option case-insensitively
+          let foundOption = false;
+          for (const optKey of Object.keys(foundSection)) {
+            if (optKey.toLowerCase() === optionLower) {
+              foundOption = true;
+              break;
+            }
+          }
+          keyMissing = !foundOption;
+        }
+      }
+    } else {
+      keyMissing = false;
+    }
   }
 
   onMount(() => {
@@ -65,7 +108,7 @@
 -->
 <div
   bind:this={element}
-  class={className}
+  class="{className} {keyMissing ? 'disabled' : ''}"
   {style}
   use:tt={{ content: tooltipContent, placement: ttPlace }}
   {...$$restProps}
@@ -75,5 +118,13 @@
   on:blur
   on:mouseup
 >
-  <slot {configAvailable} {configData} />
+  <slot {configAvailable} {configData} {keyMissing} />
 </div>
+
+<style>
+  div.disabled > :global(*) {
+    pointer-events: none;
+    opacity: 0.5;
+    filter: grayscale(100%);
+  }
+</style>

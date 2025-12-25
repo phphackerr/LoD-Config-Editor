@@ -96,6 +96,14 @@
   function handleComponentUpdate(component) {
     updateComponent(component);
   }
+
+  let wasChecking = false;
+  $: if (wasChecking && !$updaterStore.checking) {
+    if ($updaterStore.available || $updaterStore.componentUpdates.length > 0) {
+      visible = true;
+    }
+  }
+  $: wasChecking = $updaterStore.checking;
 </script>
 
 {#if ($updaterStore.available || $updaterStore.componentUpdates.length > 0) && visible}
@@ -113,12 +121,10 @@
     <div class="content">
       {#if $updaterStore.available}
         <div class="info">
-          <span class="title"
-            >{$t('update_available', { default: 'Update Available' })}: {$updaterStore.version}</span
-          >
+          <span class="title">{$t('UPDATER.update_available')}: {$updaterStore.version}</span>
           {#if $updaterStore.body}
             <div class="changelog">
-              <div class="changelog-title">{$t('changelog', { default: 'Changelog' })}:</div>
+              <div class="changelog-title">{$t('UPDATER.changelog')}:</div>
               <pre class="changelog-text">{$updaterStore.body}</pre>
             </div>
           {/if}
@@ -126,15 +132,17 @@
             <div class="progress-bar">
               <div class="fill" style="width: {$updaterStore.progress}%"></div>
             </div>
-            <span class="status">Downloading... {Math.round($updaterStore.progress)}%</span>
+            <span class="status"
+              >{$t('UPDATER.downloading_progress')} {Math.round($updaterStore.progress)}%</span
+            >
           {:else if $updaterStore.readyToRestart}
-            <div class="success-msg">{$t('update_ready', { default: 'Download Complete!' })}</div>
+            <div class="success-msg">{$t('UPDATER.update_ready')}</div>
             <button class="update-btn restart-btn" on:click={handleRestart}>
-              {$t('restart_now', { default: 'Restart Now' })}
+              {$t('UPDATER.restart_now')}
             </button>
           {:else}
             <button class="update-btn" on:click={handleUpdate}>
-              {$t('update_now', { default: 'Update Now' })}
+              {$t('UPDATER.update_now')}
             </button>
           {/if}
         </div>
@@ -142,7 +150,7 @@
 
       {#if $updaterStore.componentUpdates.length > 0}
         <div class="components-list">
-          <span class="title">{$t('component_updates', { default: 'Component Updates' })}</span>
+          <span class="title">{$t('UPDATER.component_updates')}</span>
           {#each $updaterStore.componentUpdates as comp}
             <div class="component-item">
               <div class="comp-info">
@@ -152,7 +160,7 @@
                 {/if}
               </div>
               <button class="btn-small" on:click={() => handleComponentUpdate(comp)}>
-                {$t('update', { default: 'Update' })}
+                {$t('UPDATER.update')}
               </button>
             </div>
           {/each}

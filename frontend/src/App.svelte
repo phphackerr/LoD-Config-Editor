@@ -10,13 +10,27 @@
   import { appSettings } from './App/lib/store/appSettings';
   import { openSettings, isSettingsOpen } from './App/lib/store/settingsModal';
 
+  import { OpenDevTools } from '/bindings/lce/backend/utils/utils';
+
   onMount(() => {
+    const handleKeydown = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'F12') {
+        OpenDevTools();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
     const unsubscribe = appSettings.subscribe((settings) => {
       if (settings.first_run) {
         openSettings('Paths');
       }
     });
-    return unsubscribe;
+
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+      unsubscribe();
+    };
   });
 </script>
 

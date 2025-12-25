@@ -145,6 +145,8 @@
 
 <Base
   {label}
+  {section}
+  {option}
   {ttKey}
   {ttImage}
   {ttPlace}

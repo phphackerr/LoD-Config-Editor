@@ -89,7 +89,8 @@ export async function updateComponent(component) {
 }
 
 // Listen for progress events
-Events.On('update:progress', (data) => {
+Events.On('update:progress', (event) => {
+  const data = event.data;
   if (data.status === 'downloading') {
     updaterStore.update((s) => ({ ...s, progress: data.percent }));
   }

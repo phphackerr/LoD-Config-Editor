@@ -1,20 +1,28 @@
 {
   "app_version": {
-    "changelog": ["• Updated about tab in settings "],
-    "version": "0.9.7"
+    "changelog": [
+      "• added hotkey for console (ctrl + shift + f12) ",
+      "• added glyph and scan hotkeys ",
+      "• added check updates button to about tab in settings ",
+      "• added traslations to updater ",
+      "• fixed progress bar in updater ",
+      "• now the case of text in the config is ignored  ",
+      "• now if the key is missing from the config, the element will be disabled and a corresponding tooltip will be added to it "
+    ],
+    "version": "0.9.8"
   },
   "locales": {
     "en": {
-      "changelog": "Updated about tab",
-      "version": "0.1.3"
+      "changelog": "Updater",
+      "version": "0.1.4"
     },
     "es": {
-      "changelog": "Updated about tab",
-      "version": "0.1.2"
+      "changelog": "Updater",
+      "version": "0.1.3"
     },
     "ru": {
-      "changelog": "Updated about tab",
-      "version": "0.1.2"
+      "changelog": "Updater",
+      "version": "0.1.3"
     }
   },
   "themes": {

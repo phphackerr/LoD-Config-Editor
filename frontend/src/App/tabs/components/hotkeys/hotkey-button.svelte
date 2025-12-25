@@ -23,8 +23,8 @@
   let showModal = false;
   let prevConfigData = null;
 
-  async function loadValue(configAvailable) {
-    if (!configAvailable || option == 'ExtraSlot1') {
+  async function loadValue(configAvailable, keyMissing) {
+    if (!configAvailable || option == 'ExtraSlot1' || keyMissing) {
       hotkeyValue = '';
       return;
     }
@@ -40,12 +40,14 @@
 
   function handleModalClose(configAvailable) {
     showModal = false;
-    loadValue(configAvailable); // Перезагружаем значение после закрытия модалки
+    loadValue(configAvailable, false); // Перезагружаем значение после закрытия модалки (считаем что ключ есть, раз мы его только что задали)
   }
 </script>
 
 <Base
   label=""
+  {section}
+  {option}
   {ttKey}
   {ttImage}
   {ttPlace}
@@ -53,9 +55,10 @@
   style={visible ? '' : 'display: none;'}
   let:configAvailable
   let:configData
+  let:keyMissing
 >
   {#if configData !== prevConfigData}
-    {((prevConfigData = configData), loadValue(configAvailable), '')}
+    {((prevConfigData = configData), loadValue(configAvailable, keyMissing), '')}
   {/if}
 
   <button

@@ -9,10 +9,13 @@
   import { t } from 'svelte-i18n';
   import { GetAppVersion, OpenURL, GetDiscordStats } from '/bindings/lce/backend/utils/utils';
   import { GetLanguages } from '/bindings/lce/backend/i18n/i18n';
+  import { checkForUpdates, updaterStore } from '../../lib/store/updater';
+  import { cubicOut } from 'svelte/easing';
 
   let appVersion = '...';
   let discordStats = null;
   let languages = [];
+  let checked = false;
 
   onMount(async () => {
     try {
@@ -38,12 +41,71 @@
   const openLink = (url) => {
     OpenURL(url);
   };
+
+  const handleCheckUpdate = async () => {
+    checked = false;
+    await checkForUpdates();
+    checked = true;
+    // Reset checked status after 1.5 seconds
+    setTimeout(() => {
+      checked = false;
+    }, 1500);
+  };
+
+  function slideHorizontal(node, { delay = 0, duration = 400, easing = cubicOut }) {
+    const style = getComputedStyle(node);
+    const width = parseFloat(style.width);
+    const marginLeft = parseFloat(style.marginLeft);
+
+    return {
+      delay,
+      duration,
+      easing,
+      css: (t) => `
+        overflow: hidden;
+        width: ${t * width}px;
+        margin-left: ${t * marginLeft}px;
+        opacity: ${t};
+        white-space: nowrap;
+      `
+    };
+  }
 </script>
 
 <div class="about-container">
   <div class="header">
     <h1>{$t('SETTINGS.ABOUT.app_name')}</h1>
-    <span class="version">{$t('SETTINGS.ABOUT.version')} {appVersion}</span>
+    <div class="version-wrapper">
+      <span class="version">{$t('SETTINGS.ABOUT.version')} {appVersion}</span>
+      <button
+        class="refresh-btn"
+        on:click={handleCheckUpdate}
+        disabled={$updaterStore.checking}
+        title={$t('SETTINGS.ABOUT.check_for_updates')}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class:spin={$updaterStore.checking}
+        >
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+          <path d="M16 16h5v5" />
+        </svg>
+      </button>
+      {#if checked && !$updaterStore.available}
+        <span class="status-text" transition:slideHorizontal>{$t('SETTINGS.ABOUT.up_to_date')}</span
+        >
+      {/if}
+    </div>
   </div>
 
   <p class="description">
@@ -171,6 +233,7 @@
     font-size: 1rem;
     opacity: 0.7;
     font-family: monospace;
+    margin-right: 10px;
   }
 
   .description {
@@ -218,6 +281,56 @@
 
   .link-btn.github {
     background-color: #333;
+  }
+
+  .version-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+  }
+
+  .refresh-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .refresh-btn:disabled {
+    cursor: wait;
+    opacity: 0.8;
+  }
+
+  .status-text {
+    font-size: 0.9rem;
+    color: #4caf50;
+    margin-left: 10px;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .btn-content {

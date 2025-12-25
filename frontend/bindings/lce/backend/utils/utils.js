@@ -38,6 +38,13 @@ export function LaunchGameExe(path, ...args) {
 }
 
 /**
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenDevTools() {
+    return $Call.ByID(3153944503);
+}
+
+/**
  * @param {string} path
  * @returns {$CancellablePromise<void>}
  */

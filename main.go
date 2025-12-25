@@ -63,20 +63,21 @@ func main() {
 			application.NewService(paths_scanner.NewScanner()),
 			application.NewService(config_editor.NewConfigEditor()),
 			application.NewService(taskbar.NewTaskbarUtils()),
-			application.NewService(utils.NewUtils()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
 	})
 
-	_ = app.Window.NewWithOptions(application.WebviewWindowOptions{
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "LoD Config Editor",
 		Width:     1300,
 		Height:    800,
 		Frameless: true,
 		URL:       "/",
 	})
+
+	app.RegisterService(application.NewService(utils.NewUtils(window)))
 
 	appSettings := app_settings.NewAppSettings(app)
 	app.RegisterService(application.NewService(appSettings))

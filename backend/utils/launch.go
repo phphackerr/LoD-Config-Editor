@@ -9,12 +9,22 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-type Utils struct{}
+type Utils struct {
+	window *application.WebviewWindow
+}
 
-func NewUtils() *Utils {
-	return &Utils{}
+func NewUtils(window *application.WebviewWindow) *Utils {
+	return &Utils{
+		window: window,
+	}
+}
+
+func (u *Utils) OpenDevTools() {
+	u.window.OpenDevTools()
 }
 
 // Открыть папку в проводнике
