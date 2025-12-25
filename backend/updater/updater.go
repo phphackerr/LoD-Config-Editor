@@ -101,7 +101,7 @@ func (u *Updater) DoUpdate(version string) error {
 	}
 
 	// 2. Find the correct asset
-	var assetUrl, assetName string
+	var assetUrl string
 	targetSuffix := ".exe"
 	if runtime.GOOS != "windows" {
 		targetSuffix = ""
@@ -110,7 +110,6 @@ func (u *Updater) DoUpdate(version string) error {
 	for _, asset := range release.Assets {
 		if strings.HasSuffix(strings.ToLower(asset.Name), targetSuffix) {
 			assetUrl = asset.BrowserDownloadUrl
-			assetName = asset.Name
 			break
 		}
 	}
@@ -125,7 +124,7 @@ func (u *Updater) DoUpdate(version string) error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 	exeDir := filepath.Dir(ex)
-	newExePath := filepath.Join(exeDir, assetName)
+	newExePath := filepath.Join(exeDir, "lce_new.exe")
 
 	// Check if we are already running this version (unlikely if we got here, but good sanity check)
 	if newExePath == ex {
@@ -176,8 +175,36 @@ func (u *Updater) RestartApp() error {
 		return fmt.Errorf("no update ready to install")
 	}
 
-	cmd := exec.Command(u.newExePath)
+	ex, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+	exeDir := filepath.Dir(ex)
+	oldExePath := filepath.Join(exeDir, "lce_old.exe")
+	targetExePath := filepath.Join(exeDir, "lce.exe")
+
+	// 1. Remove old backup if exists
+	// We ignore error because it might not exist
+	_ = os.Remove(oldExePath)
+
+	// 2. Rename current to old
+	// Windows allows renaming the running executable
+	if err := os.Rename(ex, oldExePath); err != nil {
+		return fmt.Errorf("failed to rename current executable to lce_old.exe: %w", err)
+	}
+
+	// 3. Rename new to target (lce.exe)
+	if err := os.Rename(u.newExePath, targetExePath); err != nil {
+		// Try to rollback: rename old back to current
+		_ = os.Rename(oldExePath, ex)
+		return fmt.Errorf("failed to rename new executable to lce.exe: %w", err)
+	}
+
+	// 4. Launch target
+	cmd := exec.Command(targetExePath)
 	if err := cmd.Start(); err != nil {
+		// Try to rollback is hard here because we already renamed things.
+		// But at least we have lce.exe on disk.
 		return fmt.Errorf("failed to start new version: %w", err)
 	}
 
@@ -203,44 +230,28 @@ func (pr *ProgressReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
-// CleanupOldExecutables removes other lce_v*.exe files
+// CleanupOldExecutables removes temporary update files
 func CleanupOldExecutables() {
 	ex, err := os.Executable()
 	if err != nil {
 		return
 	}
 	exeDir := filepath.Dir(ex)
-	currentName := filepath.Base(ex)
 	
-	files, err := os.ReadDir(exeDir)
-	if err != nil {
-		return
+	// Clean up lce_new.exe if it exists (failed update leftover)
+	newExePath := filepath.Join(exeDir, "lce_new.exe")
+	if _, err := os.Stat(newExePath); err == nil {
+		_ = os.Remove(newExePath)
 	}
 
-	// Simple heuristic: delete any OTHER .exe that looks like lce_v*.exe
-	// This assumes the user wants to keep only the running version.
-	for _, file := range files {
-		name := file.Name()
-		if name == currentName {
-			continue
-		}
-		
-		// Check if it looks like our app (starts with lce_v and ends with .exe)
-		// Adjust prefix if needed based on user's naming convention
-		if strings.HasPrefix(strings.ToLower(name), "lce_v") && strings.HasSuffix(strings.ToLower(name), ".exe") {
-			oldPath := filepath.Join(exeDir, name)
-			// Try to remove
-			err := os.Remove(oldPath)
-			if err != nil {
-				// One retry attempt
-				time.Sleep(2 * time.Second)
-				_ = os.Remove(oldPath)
-			}
-		}
-		
-		// Also clean up .old files just in case
-		if strings.HasSuffix(name, ".old") {
-			_ = os.Remove(filepath.Join(exeDir, name))
+	// Clean up lce_old.exe (previous version backup)
+	oldExePath := filepath.Join(exeDir, "lce_old.exe")
+	if _, err := os.Stat(oldExePath); err == nil {
+		err := os.Remove(oldExePath)
+		if err != nil {
+			// One retry attempt
+			time.Sleep(2 * time.Second)
+			_ = os.Remove(oldExePath)
 		}
 	}
 }

@@ -1,15 +1,9 @@
 {
   "app_version": {
     "changelog": [
-      "• added hotkey for console (ctrl + shift + f12) ",
-      "• added glyph and scan hotkeys ",
-      "• added check updates button to about tab in settings ",
-      "• added traslations to updater ",
-      "• fixed progress bar in updater ",
-      "• now the case of text in the config is ignored  ",
-      "• now if the key is missing from the config, the element will be disabled and a corresponding tooltip will be added to it "
+      "• changed updater logic, now the name will always be lce.exe in favor of shortcuts "
     ],
-    "version": "0.9.8"
+    "version": "0.9.9"
   },
   "locales": {
     "en": {

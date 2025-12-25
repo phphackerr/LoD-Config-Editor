@@ -118,6 +118,10 @@ func updateWindowsInfo(path string, version string) error {
 	reProdVer := regexp.MustCompile(`"ProductVersion": ".*"`)
 	strContent = reProdVer.ReplaceAllString(strContent, fmt.Sprintf(`"ProductVersion": "%s"`, version))
 
+	// JSON: "file_version": "..."
+	reFileVer := regexp.MustCompile(`"file_version": ".*"`)
+	strContent = reFileVer.ReplaceAllString(strContent, fmt.Sprintf(`"file_version": "%s"`, version))
+
 	return os.WriteFile(path, []byte(strContent), 0644)
 }
 
