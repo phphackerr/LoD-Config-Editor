@@ -15,6 +15,8 @@
 <svelte:window on:keydown={handleKeydown} />
 
 {#if $isSettingsOpen}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="modal-backdrop" on:click={closeSettings} transition:fade={{ duration: 200 }}>
     <div
       class="modal-content"
@@ -43,7 +45,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--settings-modal-backdrop-color, rgba(0, 0, 0, 0.5));
     display: flex;
     justify-content: center;
     align-items: center;
@@ -52,18 +54,18 @@
   }
 
   .modal-content {
-    background: var(--settings-bg-color);
-    color: var(--settings-text-color);
+    background: var(--settings-modal-bg-color, var(--app-bg, rgb(47, 47, 47)));
+    color: var(--settings-modal-text-color, var(--app-text, rgb(246, 246, 246)));
     width: 80%;
     height: 80%;
     max-width: 1000px;
     max-height: 800px;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--settings-modal-shadow, 0 4px 20px rgba(0, 0, 0, 0.3));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--border-color, #444);
+    border: 1px solid var(--settings-modal-border-color, var(--border-color, #444));
   }
 
   .modal-header {
@@ -71,8 +73,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: var(--titlebar-bg-color);
-    border-bottom: 1px solid var(--border-color, #444);
+    background: var(--settings-modal-header-bg-color, var(--titlebar-bg, rgb(59, 164, 117)));
+    border-bottom: 1px solid var(--settings-modal-border-color, var(--border-color, #444));
   }
 
   .modal-header h2 {
@@ -87,12 +89,12 @@
     cursor: pointer;
     padding: 5px;
     border-radius: 4px;
-    color: var(--text-color);
+    color: var(--settings-modal-close-color, var(--app-text, rgb(246, 246, 246)));
     transition: background 0.2s;
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--settings-modal-close-hover-bg, rgba(255, 255, 255, 0.1));
   }
 
   .icon-wrapper {

@@ -1,36 +1,123 @@
-// @ts-nocheck
-import { writable, get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import {
-  LoadConfig,
-  IsConfigAvailable,
   GetConfigValue,
+  IsConfigAvailable,
+  LoadConfig,
   SetConfigValue
 } from '/bindings/lce/backend/config_editor/configeditor';
-import { Events } from '@wailsio/runtime';
 import { appSettings } from './appSettings';
+import { normalizePath, samePath, toLocalizedError, tr } from './storeUtils';
 
-export const configStore = writable({
+const initialConfigStore = {
   loading: false,
   error: null,
   data: null,
   path: null
-});
+};
 
-// Helper to normalize paths for comparison (handles mixed slashes)
-function normalizePath(p) {
-  return p ? p.replace(/\\/g, '/').toLowerCase() : null;
+const initialConfigState = {
+  loading: false,
+  success: false,
+  error: null,
+  operation: '',
+  lastResult: null
+};
+
+const CONFIG_OP_RESET = 'config:reset';
+const CONFIG_OP_LOAD = 'config:load';
+const CONFIG_OP_CHECK_AVAILABLE = 'config:check-available';
+const CONFIG_OP_SAVE = 'config:save';
+
+export const configStore = writable({ ...initialConfigStore });
+export const configState = writable({ ...initialConfigState });
+
+let loadRequestId = 0;
+let lastLoadedPath = null;
+let operationSeq = 0;
+
+function updateConfigStore(patch) {
+  configStore.update((state) => ({ ...state, ...patch }));
 }
 
-// === helpers ===
-export async function loadConfig(path) {
-  if (!path) {
-    resetConfig();
-    return null;
+function configPathFromGamePath(gamePath) {
+  const base = String(gamePath || '').trim();
+  if (!base) return null;
+  return `${base}\\config.lod.ini`;
+}
+
+function updateConfigState(patch) {
+  configState.update((state) => ({ ...state, ...patch }));
+}
+
+function createConfigResult(operation, { ok, data = null, error = null, rolledBack = false }) {
+  return {
+    ok: Boolean(ok),
+    operation,
+    data,
+    error: error ? String(error) : null,
+    rolledBack: Boolean(rolledBack)
+  };
+}
+
+function startConfigOperation(operation, { loading = true } = {}) {
+  operationSeq += 1;
+  const token = operationSeq;
+  updateConfigState({
+    loading,
+    success: false,
+    error: null,
+    operation
+  });
+  return token;
+}
+
+function finishConfigOperation(token, result, patch = {}) {
+  if (token !== operationSeq) {
+    return result;
   }
 
-  // Запоминаем путь, который начали грузить
-  const currentPath = path;
+  updateConfigState({
+    loading: false,
+    success: result.ok,
+    error: result.error,
+    operation: result.operation,
+    lastResult: result,
+    ...patch
+  });
+  return result;
+}
 
+export function resetConfig() {
+  const token = startConfigOperation(CONFIG_OP_RESET, { loading: false });
+  loadRequestId += 1;
+  lastLoadedPath = null;
+  configStore.set({ ...initialConfigStore });
+  return finishConfigOperation(
+    token,
+    createConfigResult(CONFIG_OP_RESET, {
+      ok: true,
+      data: null
+    })
+  );
+}
+
+export async function loadConfig(path) {
+  const token = startConfigOperation(CONFIG_OP_LOAD);
+  const normalizedPath = normalizePath(path);
+  if (!normalizedPath) {
+    loadRequestId += 1;
+    lastLoadedPath = null;
+    configStore.set({ ...initialConfigStore });
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_LOAD, {
+        ok: true,
+        data: null
+      })
+    );
+  }
+
+  const requestId = ++loadRequestId;
   configStore.set({
     loading: true,
     error: null,
@@ -40,116 +127,177 @@ export async function loadConfig(path) {
 
   try {
     const config = await LoadConfig(path);
-
-    // Проверка на Race Condition:
-    // Если пока мы грузили, путь в сторе изменился (кто-то вызвал loadConfig с другим путем),
-    // то игнорируем этот результат.
-    const storePath = get(configStore).path;
-    if (normalizePath(storePath) !== normalizePath(currentPath)) {
-      console.warn(
-        `[configStore] Загрузка для ${currentPath} отменена, так как путь изменился на ${storePath}`
-      );
-      return null;
+    if (requestId !== loadRequestId) {
+      return createConfigResult(CONFIG_OP_LOAD, {
+        ok: false,
+        error: tr('ERRORS.config.stale_load_ignored')
+      });
     }
 
-    configStore.set({
+    updateConfigStore({
       loading: false,
       error: null,
       data: config,
       path
     });
-    console.log('✅ Конфиг загружен:', get(configStore));
-    return config;
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_LOAD, {
+        ok: true,
+        data: {
+          path,
+          config
+        }
+      })
+    );
   } catch (error) {
-    // Тоже проверяем актуальность перед записью ошибки
-    const storePath = get(configStore).path;
-    if (normalizePath(storePath) !== normalizePath(currentPath)) {
-      return null;
+    if (requestId !== loadRequestId) {
+      return createConfigResult(CONFIG_OP_LOAD, {
+        ok: false,
+        error: tr('ERRORS.config.stale_load_ignored')
+      });
     }
 
-    configStore.set({
+    const message = toLocalizedError(error, 'ERRORS.config.load');
+
+    updateConfigStore({
       loading: false,
-      error: error?.message ?? String(error),
+      error: message,
       data: null,
       path
     });
-    console.error('❌ Ошибка загрузки конфига:', error);
-    return null;
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_LOAD, {
+        ok: false,
+        data: {
+          path,
+          config: null
+        },
+        error: message
+      })
+    );
   }
 }
 
-export function resetConfig() {
-  configStore.set({
-    loading: false,
-    error: null,
-    data: null,
-    path: null
-  });
-  console.log('🔄 Стор конфига сброшен');
-}
+export async function checkConfigAvailability() {
+  const token = startConfigOperation(CONFIG_OP_CHECK_AVAILABLE, { loading: false });
 
-// === backend wrappers ===
-export async function isConfigAvailable() {
   try {
-    return await IsConfigAvailable();
-  } catch (err) {
-    console.error('Ошибка при проверке наличия конфига:', err);
-    return false;
+    const available = await IsConfigAvailable();
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_CHECK_AVAILABLE, {
+        ok: true,
+        data: Boolean(available)
+      })
+    );
+  } catch (error) {
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_CHECK_AVAILABLE, {
+        ok: false,
+        data: false,
+        error: toLocalizedError(error, 'ERRORS.config.check_availability')
+      })
+    );
   }
+}
+
+export async function isConfigAvailable() {
+  const result = await checkConfigAvailability();
+  return result.ok ? Boolean(result.data) : false;
 }
 
 export async function getConfigValue(section, option) {
   try {
     return await GetConfigValue(section, option);
-  } catch (err) {
-    console.error(`Ошибка при получении значения [${section}] ${option}:`, err);
-    return null;
+  } catch {
+    return '';
   }
 }
 
 export async function setConfigValue(section, option, value) {
+  const result = await saveConfigValue(section, option, value);
+  return result.ok;
+}
+
+export async function saveConfigValue(section, option, value, fallbackMessage = '') {
+  const token = startConfigOperation(CONFIG_OP_SAVE, { loading: false });
+
   try {
     await SetConfigValue(section, option, value);
-    console.log(`Значение [${section}] ${option} = ${value} сохранено`);
 
-    configStore.update((s) => {
-      // Сбрасываем ошибку при успешном сохранении
-      s.error = null;
-      if (s.data) {
-        if (!s.data[section]) s.data[section] = {};
-        s.data[section][option] = value;
-      }
-      return s;
+    configStore.update((state) => {
+      if (!state.data) return { ...state, error: null };
+
+      const sectionData = state.data[section] ? { ...state.data[section] } : {};
+      sectionData[option] = value;
+
+      return {
+        ...state,
+        error: null,
+        data: {
+          ...state.data,
+          [section]: sectionData
+        }
+      };
     });
-  } catch (err) {
-    console.error(`Ошибка при установке значения [${section}] ${option}:`, err);
-    // Обновляем стор, чтобы показать ошибку UI
-    configStore.update((s) => {
-      s.error = `Не удалось сохранить [${section}] ${option}: ${err}`;
-      return s;
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_SAVE, {
+        ok: true,
+        data: {
+          section,
+          option,
+          value
+        }
+      })
+    );
+  } catch (error) {
+    const fallback = fallbackMessage || tr('ERRORS.config.save_option', { section, option });
+    const message = toLocalizedError(error, 'ERRORS.config.save_option', fallback, {
+      section,
+      option
     });
-    // Можно добавить alert, если нет toast-системы
-    // alert(`Ошибка сохранения: ${err}`);
+    updateConfigStore({ error: message });
+    return finishConfigOperation(
+      token,
+      createConfigResult(CONFIG_OP_SAVE, {
+        ok: false,
+        data: {
+          section,
+          option,
+          value
+        },
+        error: message
+      })
+    );
   }
 }
 
-// === Автосинхронизация с appSettings ===
-let lastLoadedPath = null;
+const unsubscribeSettings = appSettings.subscribe((settings) => {
+  const nextPath = configPathFromGamePath(settings?.game_path);
 
-appSettings.subscribe((settings) => {
-  const newPath = settings.game_path?.trim() ? `${settings.game_path}/config.lod.ini` : null;
-
-  if (normalizePath(newPath) === normalizePath(lastLoadedPath)) {
-    // путь не изменился → не перезагружаем
+  if (samePath(nextPath, lastLoadedPath)) {
     return;
   }
 
-  if (newPath) {
-    console.log('[configStore] Загружаем конфиг из appSettings:', newPath);
-    loadConfig(newPath);
-    lastLoadedPath = newPath;
-  } else {
-    resetConfig();
-    lastLoadedPath = null;
+  if (nextPath) {
+    loadConfig(nextPath);
+    lastLoadedPath = nextPath;
+    return;
   }
+
+  resetConfig();
 });
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unsubscribeSettings();
+  });
+}
+
+export function getCurrentConfigPath() {
+  return get(configStore).path;
+}

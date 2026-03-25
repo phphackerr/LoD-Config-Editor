@@ -3,23 +3,29 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"lce/backend/runtimepaths"
 	"lce/backend/version"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type Utils struct {
 	window *application.WebviewWindow
+	client *http.Client
 }
 
 func NewUtils(window *application.WebviewWindow) *Utils {
 	return &Utils{
 		window: window,
+		client: &http.Client{
+			Timeout: 15 * time.Second,
+		},
 	}
 }
 
@@ -47,6 +53,22 @@ func (g *Utils) OpenFolderInExplorer(path string) error {
 		return fmt.Errorf("ошибка запуска explorer: %w", err)
 	}
 	return nil
+}
+
+func (g *Utils) OpenThemesFolder() error {
+	themesDir, err := runtimepaths.ThemesDir()
+	if err != nil {
+		return fmt.Errorf("ошибка получения папки themes: %w", err)
+	}
+	return g.OpenFolderInExplorer(themesDir)
+}
+
+func (g *Utils) OpenLocalesFolder() error {
+	localesDir, err := runtimepaths.LocalesDir()
+	if err != nil {
+		return fmt.Errorf("ошибка получения папки locales: %w", err)
+	}
+	return g.OpenFolderInExplorer(localesDir)
 }
 
 // Запуск игры с аргументами
@@ -135,7 +157,7 @@ type DiscordInvite struct {
 
 func (g *Utils) GetDiscordStats(inviteCode string) (*DiscordInvite, error) {
 	url := fmt.Sprintf("https://discord.com/api/v9/invites/%s?with_counts=true", inviteCode)
-	resp, err := http.Get(url)
+	resp, err := g.client.Get(url)
 	if err != nil {
 		return nil, err
 	}

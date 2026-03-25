@@ -1,18 +1,19 @@
 <script module>
-  // @ts-nocheck
   export const tabMetadata = {
     order: 4
   };
 </script>
 
 <script>
-  //@ts-nocheck
   import Checkbox from './components/Checkbox.svelte';
   import Dropdown from './components/Dropdown.svelte';
   import ColorPicker from './components/ColorPicker.svelte';
   import { onMount } from 'svelte';
   import { getConfigValue } from '../lib/store/config';
+  import { notifyError } from '../lib/store/notifications';
   import { setContext } from 'svelte';
+  import { toErrorMessage } from '../lib/store/storeUtils';
+  import { t } from 'svelte-i18n';
 
   const tabId = 'HpBars';
   setContext('tabId', tabId);
@@ -24,6 +25,7 @@
   let isHpBarsEnabled = $state(false);
   let customPreset = $state('1');
   let isCustomSelected = $state(false);
+  let loadError = $state('');
 
   $effect(() => {
     // Явно приводим к строке, чтобы сравнение было надёжным
@@ -32,13 +34,15 @@
 
   onMount(async () => {
     try {
+      loadError = '';
       const hpBarsConfigValue = await getConfigValue(GAME_SECTION, 'DotA2HPBars');
       isHpBarsEnabled = hpBarsConfigValue.toLowerCase() === 'true';
 
       const presetConfigValue = await getConfigValue(SECTION, 'CustomBarPresetNumber');
       customPreset = presetConfigValue;
     } catch (error) {
-      console.error('HpBars: Ошибка загрузки конфига', error);
+      loadError = toErrorMessage(error, $t('ERRORS.hpbars.load_settings'));
+      notifyError(loadError);
       isHpBarsEnabled = false;
     }
   });
@@ -64,6 +68,10 @@
 
 <div class="hp-bars-grid">
   <div class="options-container">
+    {#if loadError}
+      <div class="load-error">{loadError}</div>
+    {/if}
+
     <!-- Верхний ряд -->
     <div class="top-row">
       <Checkbox
@@ -134,6 +142,20 @@
     flex-direction: column;
     gap: 30px;
     align-items: center;
+    background: var(--hpbars-bg-color, rgba(0, 0, 0, 0));
+  }
+
+  .load-error {
+    max-width: 520px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--hpbars-error-border-color, rgba(220, 38, 38, 0.4));
+    background: var(--hpbars-error-bg-color, rgba(220, 38, 38, 0.15));
+    color: var(--hpbars-error-text-color, #fecaca);
+    font-size: 13px;
+    line-height: 1.3;
+    user-select: text;
+    text-align: center;
   }
 
   .top-row {

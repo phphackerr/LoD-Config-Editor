@@ -43,3 +43,12 @@ tasks:
     summary: Bumps the application version
     cmds:
       - go run scripts/bump_version.go {{.V}}
+
+  smoke:
+    summary: Runs release smoke checks (backend tests + frontend lint/build)
+    cmds:
+      - cmd: go test ./...
+      - cmd: npm run lint
+        dir: ./frontend
+      - cmd: npm run build
+        dir: ./frontend

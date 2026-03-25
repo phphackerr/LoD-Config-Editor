@@ -1,5 +1,4 @@
 <script>
-  //@ts-nocheck
   import { Window, Application } from '@wailsio/runtime';
   import icon from '/favicon.png';
   import { SettingsIc, MinimizeIc, MaximizeIc, CloseIc } from '../lib/icons.js';
@@ -23,7 +22,7 @@
       class="titlebar-button"
       on:click={openSettings}
       use:tt={{ content: $t('TITLE.settings_tooltip') }}
-      aria-label="Settings"
+      aria-label={$t('TITLE.settings_tooltip')}
     >
       <div class="button-icon">
         <SettingsIc />
@@ -34,7 +33,7 @@
       id="titlebar-minimize"
       on:click={Window.Minimise}
       use:tt={{ content: $t('TITLE.minimize_tooltip') }}
-      aria-label="Minimize"
+      aria-label={$t('TITLE.minimize_tooltip')}
     >
       <div class="button-icon">
         <MinimizeIc />
@@ -45,7 +44,7 @@
       id="titlebar-maximize"
       on:click={Window.ToggleMaximise}
       use:tt={{ content: $t('TITLE.maximize_tooltip') }}
-      aria-label="Maximize"
+      aria-label={$t('TITLE.maximize_tooltip')}
     >
       <div class="button-icon">
         <MaximizeIc />
@@ -55,7 +54,7 @@
       class="titlebar-button close"
       id="titlebar-close"
       on:click={Application.Quit}
-      aria-label="Close"
+      aria-label={$t('TITLE.close_tooltip')}
       use:tt={{ content: $t('TITLE.close_tooltip') }}
     >
       <div class="button-icon close-svg">
@@ -69,7 +68,6 @@
   .titlebar {
     --wails-draggable: drag;
     height: 30px;
-    background: var(--titlebar-bg-color);
     user-select: none;
     display: flex;
     justify-content: space-between;
@@ -77,6 +75,8 @@
     left: 0;
     right: 0;
     z-index: 100;
+
+    background: var(--titlebar-bg, rgb(59, 164, 117));
   }
 
   .logo {
@@ -91,12 +91,13 @@
   }
 
   .span-text {
-    color: var(--titlebar-logo-text-color);
     margin-left: 10px;
     text-align: center;
-    font-size: 16px;
-    font-weight: 600 !important;
     white-space: nowrap;
+
+    color: var(--titlebar-text, rgb(33, 33, 33));
+    font-size: var(--titlebar-text-size, 16px);
+    font-weight: var(--titlebar-text-weight, 600) !important;
   }
 
   .titlebar-center {
@@ -104,7 +105,7 @@
     display: flex;
     align-items: center;
     pointer-events: none; /* чтобы не мешать drag-region */
-    width: 300px; /* или auto, если нужно */
+    width: 300px;
     justify-content: center;
   }
 
@@ -115,40 +116,42 @@
     align-items: center;
     width: 40px;
     height: 30px;
-    background: var(--titlebar-button-bg-color);
     border: none;
     transition: 0.3s;
+
+    background: var(--titlebar-button-bg, rgba(0, 0, 0, 0));
   }
 
   .titlebar-button:focus-visible {
-    background: var(--titlebar-button-bg-color-hover);
+    background: var(--titlebar-button-bg--hover, rgb(91, 190, 195));
     outline: none;
     border: 0.5px solid black;
   }
 
   .titlebar-button:hover {
-    background: var(--titlebar-button-bg-color-hover);
+    background: var(--titlebar-button-bg--hover, rgb(91, 190, 195));
   }
 
   .titlebar-button:hover .button-icon {
-    color: var(--titlebar-button-color-hover);
+    color: var(--titlebar-button-icon-color--hover, rgb(33, 33, 33));
   }
 
   .close:focus {
-    background: var(--titlebar-close-button-bg-color-hover);
+    background: var(--titlebar-close-bg--hover, rgb(202, 51, 51));
   }
 
   .close:hover {
-    background: var(--titlebar-close-button-bg-color-hover);
+    background: var(--titlebar-close-bg--hover, rgb(202, 51, 51));
   }
 
   .close:hover .close-svg {
-    color: var(--titlebar-close-button-color-hover);
+    color: var(--titlebar-close-icon-color--hover, rgb(33, 33, 33));
   }
 
   .button-icon {
-    color: var(--titlebar-button-color);
     width: 24px;
     height: 24px;
+
+    color: var(--titlebar-button-icon-color, rgb(33, 33, 33));
   }
 </style>

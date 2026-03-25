@@ -1,36 +1,45 @@
-//@ts-nocheck
-import tippy from "tippy.js";
-import "tippy.js/dist/tippy.css";
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css';
 // import "tippy.js/themes/light-border.css";
-import "tippy.js/themes/material.css";
-import "tippy.js/animations/scale.css";
+import 'tippy.js/themes/material.css';
+import 'tippy.js/animations/scale.css';
 
 export const defaultOptions = {
-  placement: "auto",
-  animation: "scale",
+  placement: 'auto',
+  animation: 'scale',
   arrow: true,
   delay: [200, 100],
   allowHTML: true,
+  appendTo: () => document.body,
   // theme: "light-border",
-  theme: "material",
+  theme: 'material',
   inertia: true,
   popperOptions: {
+    strategy: 'fixed',
     modifiers: [
       {
-        name: "preventOverflow",
+        name: 'preventOverflow',
         options: {
-          padding: 8,
-        },
-      },
-    ],
-  },
+          padding: 8
+        }
+      }
+    ]
+  }
 };
 
 export function tt(node, params) {
   let instance;
 
+  const stripNativeTitle = () => {
+    if (node?.hasAttribute?.('title')) {
+      node.removeAttribute('title');
+    }
+  };
+
   // Вспомогательная функция для создания или обновления tippy
   const initialize = (currentParams) => {
+    stripNativeTitle();
+
     // Проверяем, есть ли контент. Если нет, ничего не делаем или уничтожаем существующий экземпляр.
     if (currentParams && currentParams.content) {
       const options = { ...defaultOptions, ...currentParams };
@@ -64,7 +73,7 @@ export function tt(node, params) {
         instance.destroy();
         instance = null;
       }
-    },
+    }
   };
 }
 
@@ -80,13 +89,13 @@ export function buildTooltipContent(items = []) {
                   <img src="${item.image}" style="max-width:200px;"/>
                 </div>`;
       }
-      return "";
+      return '';
     })
-    .join("");
+    .join('');
 }
 
-if (typeof window !== "undefined") {
-  const style = document.createElement("style");
+if (typeof window !== 'undefined') {
+  const style = document.createElement('style');
   style.textContent = `
     .tippy-box {
       user-select: text !important;

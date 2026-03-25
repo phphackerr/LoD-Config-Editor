@@ -117,7 +117,7 @@
     tabindex="-1"
     style="top: {position.top}; left: {position.left}; transform: {position.transform};"
   >
-    <button class="close-btn" on:click={handleClose} aria-label="Close">×</button>
+    <button class="close-btn" on:click={handleClose} aria-label={$t('COMMON.close')}>×</button>
     <div class="content">
       {#if $updaterStore.available}
         <div class="info">
@@ -177,20 +177,23 @@
 <style>
   .updater-notification {
     position: fixed;
-    background: rgba(20, 20, 20, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.5);
+    background: var(--updater-panel-bg, var(--surface-panel, rgba(20, 20, 20, 0.85)));
+    border: 1px solid
+      var(--updater-panel-border, var(--surface-panel-border, rgba(64, 64, 64, 0.5)));
     border-radius: 12px;
     padding: 20px;
     z-index: 9999;
-    box-shadow:
+    box-shadow: var(
+      --updater-panel-shadow,
       0 20px 60px 0 rgba(0, 0, 0, 0.95),
-      0 0 30px rgba(255, 215, 0, 0.4);
+      0 0 30px var(--status-warning-border, rgba(245, 158, 11, 0.35))
+    );
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     width: 600px;
     max-width: 90vw;
     font-family: 'Segoe UI', sans-serif;
-    color: #fff;
+    color: var(--text-color-primary, #fff);
     cursor: move;
     user-select: none;
   }
@@ -202,35 +205,37 @@
   }
 
   .title {
-    color: #ffd700;
+    color: var(--updater-title-color, var(--accent-color, #ffd700));
     font-size: 16px;
     font-weight: 600;
     display: block;
     margin-bottom: 8px;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    text-shadow: 0 0 10px
+      var(--updater-title-glow, var(--status-warning-bg, rgba(245, 158, 11, 0.12)));
   }
 
   .changelog {
     cursor: default;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--updater-changelog-bg, var(--surface-panel-muted, rgba(0, 0, 0, 0.3)));
     border-radius: 6px;
     padding: 8px;
     margin-bottom: 10px;
     max-height: 150px;
     overflow-y: auto;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid
+      var(--updater-changelog-border, var(--border-color, rgba(255, 255, 255, 0.08)));
   }
 
   .changelog-title {
     font-size: 12px;
-    color: #aaa;
+    color: var(--text-color-muted, #aaa);
     margin-bottom: 4px;
     font-weight: 600;
   }
 
   .changelog-text {
     font-size: 12px;
-    color: #ddd;
+    color: var(--text-color-secondary, #ddd);
     white-space: pre-wrap;
     margin: 0;
     font-family: inherit;
@@ -238,8 +243,8 @@
   }
 
   .update-btn {
-    background: linear-gradient(135deg, #e6c200 0%, #e6a800 100%);
-    color: #1a1a1a;
+    background: var(--action-accent-bg, #e6c200);
+    color: var(--surface-base, #1a1a1a);
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
@@ -255,7 +260,8 @@
 
   .update-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 4px 8px var(--status-warning-border, rgba(245, 158, 11, 0.35));
+    background: var(--action-accent-bg-hover, #e6a800);
     filter: brightness(1.1);
   }
 
@@ -264,16 +270,17 @@
   }
 
   .restart-btn {
-    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-    color: white;
+    background: var(--action-primary-bg, #3ba475);
+    color: var(--text-color-primary, #fff);
   }
 
   .restart-btn:hover {
-    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    background: var(--action-primary-bg-hover, #2e8b57);
+    box-shadow: 0 4px 8px var(--status-success-border, rgba(36, 147, 79, 0.38));
   }
 
   .success-msg {
-    color: #4caf50;
+    color: var(--status-success-text, #9be5be);
     font-size: 12px;
     font-weight: bold;
     margin-bottom: 5px;
@@ -281,7 +288,7 @@
 
   .progress-bar {
     height: 6px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--slider-line-color, rgba(255, 255, 255, 0.1));
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 5px;
@@ -289,23 +296,23 @@
 
   .fill {
     height: 100%;
-    background: #ffd700;
+    background: var(--accent-color, #ffd700);
     transition: width 0.3s ease;
   }
 
   .status {
     font-size: 12px;
-    color: #aaa;
+    color: var(--text-color-muted, #aaa);
   }
 
   .error {
-    color: #ff4444;
+    color: var(--status-error-text, #fecaca);
     font-size: 12px;
     margin-top: 5px;
   }
 
   .components-list {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     padding-top: 10px;
     margin-top: 5px;
   }
@@ -316,7 +323,7 @@
     align-items: center;
     font-size: 12px;
     margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
     padding-bottom: 5px;
   }
 
@@ -331,15 +338,15 @@
 
   .comp-changelog {
     font-size: 10px;
-    color: #aaa;
+    color: var(--text-color-muted, #aaa);
     margin-top: 2px;
     font-style: italic;
   }
 
   .btn-small {
-    background: #444;
-    color: #fff;
-    border: 1px solid #666;
+    background: var(--action-secondary-bg, #444);
+    color: var(--text-color-primary, #fff);
+    border: 1px solid var(--border-color, #666);
     padding: 2px 8px;
     border-radius: 3px;
     cursor: pointer;
@@ -347,7 +354,7 @@
   }
 
   .btn-small:hover {
-    background: #555;
+    background: var(--action-secondary-bg-hover, #555);
   }
 
   .close-btn {
@@ -356,7 +363,7 @@
     right: 10px;
     background: transparent;
     border: none;
-    color: #aaa;
+    color: var(--updater-close-color, var(--text-color-muted, #aaa));
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
@@ -371,6 +378,6 @@
   }
 
   .close-btn:hover {
-    color: #fff;
+    color: var(--updater-close-hover-color, var(--text-color-primary, #fff));
   }
 </style>

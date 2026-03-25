@@ -29,7 +29,10 @@
   $: {
     const items = [];
     if (keyMissing) {
-      items.push({ key: `Key not found: [${section}] ${option}`, color: '#ff4444' });
+      items.push({
+        key: `${$t('ERRORS.controls.key_not_found')}: [${section}] ${option}`,
+        color: '#ff4444'
+      });
     } else {
       if (ttKey) items.push({ key: $t(ttKey) });
       if (ttImage) items.push({ image: ttImage });

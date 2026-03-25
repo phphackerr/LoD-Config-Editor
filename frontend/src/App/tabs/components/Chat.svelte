@@ -1,9 +1,8 @@
 <script>
-  // @ts-nocheck
   import { t } from 'svelte-i18n';
-  import { getConfigValue, setConfigValue } from '../../lib/store/config';
+  import { getConfigValue } from '../../lib/store/config';
   import HotkeyButton from './hotkeys/hotkey-button.svelte';
-  import { isInternalChange } from '../../lib/store/internalChange';
+  import { persistControlValue } from './lib/controlPipeline';
   import Base from './Base.svelte';
 
   export let label = '';
@@ -18,7 +17,9 @@
   export let width = 480;
 
   let textValue = '';
+  let lastSavedValue = '';
   let prevConfigData = null;
+  $: inputStyle = `flex: 1; max-width: ${width}px;`;
 
   async function loadValue(configAvailable) {
     if (!configAvailable) {
@@ -26,21 +27,29 @@
       return;
     }
 
-    const value = await getConfigValue(section, option);
-    textValue = value ?? '';
+    const value = String((await getConfigValue(section, option)) || '');
+    textValue = value;
+    lastSavedValue = value;
   }
 
   async function handleChange(event, configAvailable) {
     if (!configAvailable) return;
 
-    const newValue = event.target.value;
-    try {
-      isInternalChange.mark();
-      await setConfigValue(section, option, newValue);
-      textValue = newValue;
-    } catch (err) {
-      console.error('Ошибка сохранения значения текстового поля:', err);
+    const newValue = String(event?.target?.value || '');
+
+    const result = await persistControlValue(
+      section,
+      option,
+      newValue,
+      $t('ERRORS.controls.save_chat')
+    );
+    if (!result.ok) {
+      textValue = lastSavedValue;
+      return;
     }
+
+    textValue = newValue;
+    lastSavedValue = newValue;
   }
 </script>
 
@@ -67,7 +76,7 @@
       bind:value={textValue}
       on:input={(e) => handleChange(e, configAvailable)}
       disabled={!configAvailable}
-      style="flex: 1;"
+      style={inputStyle}
       placeholder={$t(label)}
     />
   {:else}
@@ -78,7 +87,7 @@
         bind:value={textValue}
         on:input={(e) => handleChange(e, configAvailable)}
         disabled={!configAvailable}
-        style="flex: 1;"
+        style={inputStyle}
         placeholder={$t(label)}
       />
       {#if hotkeyOption}
@@ -111,7 +120,7 @@
     background-color: var(--chat-input-bg-color);
     border: 1px solid var(--chat-input-border-color);
     border-radius: 4px;
-    color: var(--color);
+    color: var(--text-color-primary);
     padding: 10px 14px;
     font-size: 16px;
     transition: all 0.2s ease;
@@ -120,19 +129,19 @@
   }
 
   .chat-input:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--chat-input-hover-bg-color, rgba(255, 255, 255, 0.15));
+    border-color: var(--chat-input-hover-border-color, rgba(255, 255, 255, 0.3));
   }
 
   .chat-input:focus {
     outline: none;
-    border-color: #ffd700;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    border-color: var(--chat-input-focus-border-color, #ffd700);
+    box-shadow: 0 0 0 2px var(--chat-input-focus-ring-color, rgba(255, 215, 0, 0.2));
   }
 
   .chat-input:disabled {
-    opacity: 0.5;
+    opacity: var(--control-disabled-opacity, 0.5);
     cursor: not-allowed;
-    border-color: #666;
+    border-color: var(--control-disabled-border-color, #666);
   }
 </style>

@@ -1,8 +1,8 @@
 <script>
-  //@ts-nocheck
   import { onMount, onDestroy, tick } from 'svelte';
-  import { searchQuery, searchableItems, activeTab } from '../lib/store/search';
+  import { searchQuery, searchableItems, activeTab, setActiveTab } from '../lib/store/search';
   import { t } from 'svelte-i18n';
+  import { tt } from '../lib/tooltip';
 
   let filteredItems = [];
   let showResults = false;
@@ -46,11 +46,8 @@
   async function handleItemClick(item) {
     // 1. Переключаем вкладку, если это необходимо
     if (item.tabId && $activeTab !== item.tabId) {
-      console.log(`Search.svelte: Switching tab from '${$activeTab}' to '${item.tabId}'`);
-      activeTab.set(item.tabId);
+      setActiveTab(item.tabId);
       await tick();
-    } else {
-      console.log('Search.svelte: No tab switch needed.');
     }
 
     const elementRect = item.element?.getBoundingClientRect();
@@ -81,7 +78,7 @@
   }
 
   function handleFocusOut(event) {
-    if (!wrapperElement.contains(event.relatedTarget)) {
+    if (!wrapperElement?.contains(event.relatedTarget)) {
       showResults = false;
     }
   }
@@ -135,12 +132,14 @@
   role="presentation"
 >
   <div class="container-input">
-    <label class="search-label">
+    <label
+      class="search-label"
+      use:tt={{ content: $t('TITLE.search_hotkey_tooltip'), placement: 'bottom' }}
+    >
       <input
         type="text"
         name="text"
         class="input"
-        required=""
         placeholder={$t('TITLE.search')}
         bind:value={$searchQuery}
         bind:this={inputElement}
@@ -156,7 +155,12 @@
           }
         }}
       />
-      <kbd class="slash-icon">Ctrl + F</kbd>
+      <kbd
+        class="slash-icon"
+        use:tt={{ content: $t('TITLE.search_hotkey_tooltip'), placement: 'bottom' }}
+      >
+        {$t('TITLE.search_hotkey_label')}
+      </kbd>
       <svg
         class="search-icon"
         xmlns="http://www.w3.org/2000/svg"
@@ -180,6 +184,7 @@
   {#if showResults}
     <ul class="search-results" role="listbox">
       {#each filteredItems as item, i}
+        <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
         <li
           role="button"
           tabindex="0"
@@ -196,7 +201,7 @@
 
 <style>
   :global(.highlight) {
-    position: relative; /* важно, чтобы ::after позиционировался от элемента */
+    position: relative;
   }
 
   :global(.highlight::after) {
@@ -206,10 +211,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    border: 2px solid #ffeb3b;
+    border: 2px solid var(--app-highlight-border-color, var(--accent-color, #ffeb3b));
     border-radius: 4px;
-    box-shadow: inset 0 0 8px #ffeb3b;
-    pointer-events: none; /* чтобы клики проходили сквозь подсветку */
+    box-shadow: inset 0 0 8px var(--app-highlight-glow-color, var(--accent-color, #ffeb3b));
+    pointer-events: none;
     animation: highlight-fade 2s ease-out forwards;
   }
 
@@ -254,29 +259,30 @@
     align-items: center;
     box-sizing: border-box;
     position: relative;
-    border: 1px solid var(--titlebar-search-border-color);
+    border: 1px solid transparent;
     border-radius: 12px;
     overflow: hidden;
-    background: var(--titlebar-search-bg-color);
+    background: var(--titlebar-search-bg, var(--bg-color-medium, rgb(61, 61, 61)));
     padding: 7px;
     cursor: text;
   }
 
   .search-label:hover {
-    border-color: var(--titlebar-search-border-color-hover);
+    border-color: var(--titlebar-search-border, var(--border-color, rgb(128, 128, 128)));
   }
 
   .search-label:focus-within {
-    background: var(--titlebar-search-bg-color-focus);
-    border-color: var(--titlebar-search-border-color-focus);
+    background: var(--titlebar-search-focus-bg, var(--bg-color, rgb(70, 70, 70)));
+    border-color: var(--titlebar-search-focus-border, var(--border-color, rgb(128, 128, 128)));
   }
 
   .search-label input {
     outline: none;
     width: 100%;
     border: none;
-    background: none;
-    color: var(--titlebar-search-input-text-color);
+
+    background: rgba(0, 0, 0, 0);
+    color: var(--titlebar-search-text, var(--text-color-secondary, rgb(162, 162, 162)));
   }
 
   .search-label input:focus + .slash-icon {
@@ -295,7 +301,8 @@
   .search-label svg,
   .slash-icon {
     position: absolute;
-    color: var(--titlebar-search-hotkey-text-color);
+
+    color: var(--titlebar-search-icon, var(--text-color-muted, rgb(151, 148, 148)));
   }
 
   .search-icon {
@@ -306,13 +313,22 @@
 
   .slash-icon {
     right: 7px;
-    border: 1px solid var(--titlebar-search-hotkey-border-color);
-    background: var(--titlebar-search-hotkey-bg-color);
-    display: flex; /* Добавляем flexbox */
-    align-items: center; /* Выравнивание по вертикали по центру */
-    justify-content: center; /* Выравнивание по горизонтали по центру */
+    border: 1px solid
+      var(--titlebar-search-hotkey-border-color, var(--border-color, rgb(57, 56, 56)));
+    background: var(
+      --titlebar-search-hotkey-bg-gradient,
+      linear-gradient(-225deg, var(--bg-color-dark, #343434), var(--bg-color-medium, #6d6d6d))
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 3px;
-    box-shadow: var(--titlebar-search-hotkey-box-shadow);
+    box-shadow: var(
+      --titlebar-search-hotkey-box-shadow,
+      inset 0 -2px 0 0 #3f3f3f,
+      inset 0 0 1px 1px rgb(94, 93, 93),
+      0 1px 2px 1px rgba(28, 28, 29, 0.4)
+    );
     cursor: text;
     font-size: 12px;
     width: fit-content;
@@ -321,37 +337,45 @@
   }
 
   .slash-icon:active {
-    box-shadow: var(--titlebar-search-hotkey-box-shadow-active);
-    text-shadow: var(--titlebar-search-hotkey-text-shadow-active);
-    color: var(--titlebar-search-hotkey-text-color-active);
+    box-shadow: var(
+      --titlebar-search-hotkey-box-shadow-active,
+      inset 0 1px 0 0 #3f3f3f,
+      inset 0 0 1px 1px rgb(94, 93, 93),
+      0 1px 2px 0 rgba(28, 28, 29, 0.4)
+    );
+    text-shadow: 0 1px 0 var(--titlebar-search-hotkey-text-shadow-color, #7e7e7e);
+    color: transparent;
   }
 
   .search-results {
-    position: absolute; /* Главное изменение: вырываем список из потока */
-    top: 100%; /* Располагаем его сразу под родительским элементом */
+    position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
-    margin-top: 5px; /* Небольшой отступ сверху */
+    margin-top: 5px;
     padding: 5px 0;
     list-style: none;
-    background: var(--titlebar-search-bg-color-focus); /* Задаем фон */
-    border: 1px solid var(--titlebar-search-border-color-focus);
+    background: var(--titlebar-search-results-bg, var(--bg-color-medium, #464646));
+    border: 1px solid var(--titlebar-search-results-border, var(--border-color, rgb(128, 128, 128)));
     border-radius: 8px;
     max-height: 300px;
     overflow-y: auto;
-    z-index: 200; /* Гарантируем, что список будет поверх других элементов */
+    z-index: 200;
   }
 
   .search-results li {
     padding: 8px 12px;
     cursor: pointer;
-    color: var(--titlebar-search-input-text-color);
+    color: var(--titlebar-search-results-text, var(--text-color-secondary, rgb(162, 162, 162)));
     font-size: 14px;
   }
 
   .search-results li:hover,
   .search-results li:focus {
-    background-color: rgba(255, 215, 0, 0.2);
+    background-color: var(
+      --titlebar-search-results-hover-bg,
+      var(--status-warning-bg, rgba(255, 215, 0, 0.2))
+    );
     outline: none;
   }
 </style>

@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
 function createInternalChangeStore() {
   const { subscribe, set } = writable(false);
@@ -12,9 +12,9 @@ function createInternalChangeStore() {
       // Если был предыдущий таймаут, сбрасываем его
       if (timeoutId) clearTimeout(timeoutId);
 
-      // Через 50 мс сбрасываем автоматически
-      timeoutId = setTimeout(() => set(false), 50);
-    },
+      // Держим флаг дольше дебаунса watcher, чтобы не ловить свои же fs-события.
+      timeoutId = setTimeout(() => set(false), 500);
+    }
   };
 }
 

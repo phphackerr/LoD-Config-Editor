@@ -1,6 +1,16 @@
 :root {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'Cantarell',
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
     sans-serif;
   font-size: 16px;
   line-height: 24px;
@@ -17,43 +27,358 @@
 
   --titlebar-height: 30px;
 
-  --background: #2f2f2f;
-  --color: #f6f6f6;
-  --tab-background: #2b2727;
-  --tab-color: #f6f6f6;
-  --tab-active-background: #444;
-  --tab-hover-background: #333;
-  --cp-bg-color: #333;
-  --cp-border-color: white;
-  --cp-text-color: var(--color);
-  --cp-input-color: #555;
-  --cp-button-hover-color: #777;
-  --chat-input-bg-color: rgba(255, 255, 255, 0.1);
-  --chat-input-border-color: rgba(255, 255, 255, 0.2);
-  --element-bg-color: rgba(255, 255, 255, 0.05);
-  --element-bg-hover-color: rgba(255, 255, 255, 0.1);
-  --dd-select-border-color: rgba(255, 255, 255, 0.2);
-  --slider-line-color: rgba(255, 255, 255, 0.1);
-  --scrollbar-bg-track-color: rgba(255, 255, 255, 0.1);
-  --scrollbar-bg-thumb-color: rgba(255, 255, 255, 0.2);
-  --scrollbar-bg-hover-color: rgba(255, 255, 255, 0.3);
+  /* Theme token aliases (new namespaced tokens -> existing component vars) */
+  --tab-background: var(--tabbar-bg, #2b2727);
+  --tab-color: var(--tabbar-text, #f6f6f6);
+  --tab-active-background: var(--tabbar-active-bg, #444);
+  --tab-hover-background: var(--tabbar-hover-bg, #333);
 
-  /* Добавляем темную тему для карт */
-  --card-bg: #2b2b2b;
-  --bg-color: #333333;
-  --border-color: #404040;
-  --text-color: #ffffff;
-  --text-secondary: #b0b0b0;
-  --primary-color: #3ba475;
-  --error-color: #ef5350;
-  --error-bg: #2d1f1f;
+  --cp-bg-color: var(--settings-colorpicker-bg, #333);
+  --cp-border-color: var(--settings-colorpicker-border, #ffffff);
+  --cp-text-color: var(--settings-colorpicker-text, #ffffff);
+  --cp-input-color: var(--settings-colorpicker-input, #555);
+  --cp-button-hover-color: var(--settings-colorpicker-button-hover, #777);
+  --cp-shadow: var(--settings-colorpicker-shadow, 0 10px 28px rgba(0, 0, 0, 0.45));
+
+  --chat-input-bg-color: var(--chat-input-bg, rgba(255, 255, 255, 0.1));
+  --chat-input-border-color: var(--chat-input-border, rgba(255, 255, 255, 0.2));
+  --chat-input-hover-bg-color: var(--chat-input-hover-bg, rgba(255, 255, 255, 0.15));
+  --chat-input-hover-border-color: var(--chat-input-hover-border, rgba(255, 255, 255, 0.3));
+  --chat-input-focus-border-color: var(--chat-input-focus-border, var(--app-accent, #ffd700));
+  --chat-input-focus-ring-color: var(--chat-input-focus-ring, rgba(255, 215, 0, 0.2));
+  --chat-bg-color: var(--chat-bg, rgba(0, 0, 0, 0));
+
+  --element-bg-color: var(--app-element-bg, rgba(255, 255, 255, 0.05));
+  --element-bg-hover-color: var(--app-element-bg-hover, rgba(255, 255, 255, 0.1));
+  --dd-select-border-color: var(--settings-dropdown-border, rgba(255, 255, 255, 0.2));
+  --slider-line-color: var(--app-slider-line, rgba(255, 255, 255, 0.1));
+  --control-active-bg-color: var(--app-control-active-bg, var(--app-accent, #ffd700));
+  --control-active-text-color: var(--app-control-active-text, #000);
+  --control-focus-border-color: var(--app-control-focus-border, var(--app-accent, #ffd700));
+  --control-focus-ring-color: var(--app-control-focus-ring, rgba(255, 215, 0, 0.2));
+  --control-disabled-border-color: var(--app-control-disabled-border, #666);
+  --control-disabled-bg-color: var(--app-control-disabled-bg, rgba(255, 255, 255, 0.02));
+  --control-disabled-opacity: var(--app-control-disabled-opacity, 0.5);
+  --control-icon-hover-bg: var(--app-control-icon-hover-bg, rgba(255, 255, 255, 0.1));
+
+  --scrollbar-bg-track-color: var(--app-scrollbar-track, rgba(255, 255, 255, 0.1));
+  --scrollbar-bg-thumb-color: var(--app-scrollbar-thumb, rgba(255, 255, 255, 0.2));
+  --scrollbar-bg-hover-color: var(--app-scrollbar-thumb-hover, rgba(255, 255, 255, 0.3));
+
+  --surface-overlay: var(--app-overlay, rgba(0, 0, 0, 0.7));
+  --surface-panel: var(--app-panel-bg, rgba(20, 20, 20, 0.85));
+  --surface-panel-border: var(--app-panel-border, rgba(64, 64, 64, 0.5));
+  --surface-panel-muted: var(--app-panel-muted, rgba(0, 0, 0, 0.3));
+  --surface-base: var(--app-surface-base, #2f2f2f);
+  --surface-elevated: var(--app-surface-elevated, #363636);
+
+  --action-primary-bg: var(--app-action-primary-bg, #3ba475);
+  --action-primary-bg-hover: var(--app-action-primary-bg-hover, #2e8b57);
+  --action-secondary-bg: var(--app-action-secondary-bg, #444);
+  --action-secondary-bg-hover: var(--app-action-secondary-bg-hover, #555);
+  --action-danger-bg: var(--app-action-danger-bg, #ca3333);
+  --action-danger-bg-hover: var(--app-action-danger-bg-hover, #d32f2f);
+  --action-accent-bg: var(--app-action-accent-bg, #e6c200);
+  --action-accent-bg-hover: var(--app-action-accent-bg-hover, #e6a800);
+  --action-primary: var(--app-action-primary-bg, #3ba475);
+
+  /* Theme Editor specific */
+  --theme-editor-bg: var(--settings-editor-bg, var(--bg-color-dark, #1e1e1e));
+  --theme-editor-body-bg: var(
+    --settings-editor-body-bg,
+    var(--surface-panel-muted, rgba(0, 0, 0, 0.28))
+  );
+  --theme-editor-sidebar-bg: var(--settings-editor-sidebar-bg, var(--bg-color, #181818));
+  --theme-editor-sidebar-row-hover-bg: var(
+    --settings-editor-sidebar-row-hover-bg,
+    var(--bg-color-medium, #222)
+  );
+  --theme-editor-sidebar-row-active-bg: var(
+    --settings-editor-sidebar-row-active-bg,
+    var(--tab-active-background, #2d2d2d)
+  );
+  --theme-editor-sidebar-row-active-fg: var(
+    --settings-editor-sidebar-row-active-fg,
+    var(--primary-color, #3ba475)
+  );
+  --theme-editor-card-bg: var(
+    --settings-editor-card-bg,
+    var(--surface-panel, rgba(20, 20, 20, 0.85))
+  );
+  --theme-editor-card-border: var(
+    --settings-editor-card-border,
+    var(--app-panel-border, rgba(64, 64, 64, 0.5))
+  );
+  --theme-editor-card-shadow: var(
+    --settings-editor-card-shadow,
+    var(--app-panel-shadow, 0 12px 30px rgba(0, 0, 0, 0.25))
+  );
+  --theme-editor-input-bg: var(--settings-editor-input-bg, var(--surface-base, #222));
+  --theme-editor-input-border: var(--settings-editor-input-border, var(--border-color, #444));
+  --theme-editor-input-border-focus: var(
+    --settings-editor-input-border-focus,
+    var(--action-primary-bg, #3ba475)
+  );
+  --theme-editor-badge-bg: var(--settings-editor-badge-bg, var(--surface-elevated, #2a2a2a));
+  --theme-editor-badge-text: var(--settings-editor-badge-text, var(--text-color-secondary, #ccc));
+  --theme-editor-hint-text: var(--settings-editor-hint-text, var(--text-color-muted, #888));
+  --theme-editor-preview-bg: var(
+    --settings-editor-preview-bg,
+    linear-gradient(180deg, rgba(26, 26, 26, 0.95), rgba(19, 19, 19, 0.95))
+  );
+  --theme-editor-preview-shadow: var(
+    --settings-editor-preview-shadow,
+    var(--theme-editor-card-shadow)
+  );
+
+  /* Settings modal */
+  --settings-modal-backdrop-color: var(--settings-modal-backdrop, rgba(0, 0, 0, 0.5));
+  --settings-modal-bg-color: var(--settings-modal-bg, var(--app-bg, rgb(47, 47, 47)));
+  --settings-modal-text-color: var(--settings-modal-text, var(--app-text, rgb(246, 246, 246)));
+  --settings-modal-border-color: var(--settings-modal-border, var(--border-color, #444));
+  --settings-modal-header-bg-color: var(
+    --settings-modal-header-bg,
+    var(--titlebar-bg, rgb(59, 164, 117))
+  );
+  --settings-modal-shadow: var(--settings-modal-shadow, 0 4px 20px rgba(0, 0, 0, 0.3));
+  --settings-modal-close-hover-bg: var(--settings-modal-close-hover-bg, rgba(255, 255, 255, 0.1));
+  --settings-modal-close-color: var(
+    --settings-modal-close-color,
+    var(--app-text, rgb(246, 246, 246))
+  );
+
+  /* Search / highlight */
+  --app-highlight-border-color: var(--app-highlight-border, var(--accent-color, #ffeb3b));
+  --app-highlight-glow-color: var(--app-highlight-glow, var(--accent-color, #ffeb3b));
+  --titlebar-search-bg: var(--titlebar-search-bg, var(--bg-color-medium, rgb(61, 61, 61)));
+  --titlebar-search-border: var(--titlebar-search-border, var(--border-color, rgb(128, 128, 128)));
+  --titlebar-search-focus-bg: var(--titlebar-search-focus-bg, var(--bg-color, rgb(70, 70, 70)));
+  --titlebar-search-focus-border: var(
+    --titlebar-search-focus-border,
+    var(--titlebar-search-border, var(--border-color, rgb(128, 128, 128)))
+  );
+  --titlebar-search-text: var(
+    --titlebar-search-text,
+    var(--text-color-secondary, rgb(162, 162, 162))
+  );
+  --titlebar-search-icon: var(--titlebar-search-icon, var(--text-color-muted, rgb(151, 148, 148)));
+  --titlebar-search-results-bg: var(--titlebar-search-results-bg, var(--bg-color-medium, #464646));
+  --titlebar-search-results-border: var(
+    --titlebar-search-results-border,
+    var(--border-color, rgb(128, 128, 128))
+  );
+  --titlebar-search-results-text: var(
+    --titlebar-search-results-text,
+    var(--text-color-secondary, rgb(162, 162, 162))
+  );
+  --titlebar-search-results-hover-bg: var(
+    --titlebar-search-results-hover-bg,
+    var(--status-warning-bg, rgba(255, 215, 0, 0.2))
+  );
+  --titlebar-search-hotkey-border-color: var(
+    --titlebar-search-hotkey-border,
+    var(--border-color, #393838)
+  );
+  --titlebar-search-hotkey-bg-gradient: var(
+    --titlebar-search-hotkey-gradient,
+    linear-gradient(-225deg, var(--bg-color-dark, #343434), var(--bg-color-medium, #6d6d6d))
+  );
+  --titlebar-search-hotkey-box-shadow: var(
+    --titlebar-search-hotkey-shadow,
+    inset 0 -2px 0 0 #3f3f3f,
+    inset 0 0 1px 1px rgb(94, 93, 93),
+    0 1px 2px 1px rgba(28, 28, 29, 0.4)
+  );
+  --titlebar-search-hotkey-box-shadow-active: var(
+    --titlebar-search-hotkey-shadow-active,
+    inset 0 1px 0 0 #3f3f3f,
+    inset 0 0 1px 1px rgb(94, 93, 93),
+    0 1px 2px 0 rgba(28, 28, 29, 0.4)
+  );
+  --titlebar-search-hotkey-text-shadow-color: var(--titlebar-search-hotkey-text-shadow, #7e7e7e);
+
+  /* Notifications */
+  --notifications-bg-color: var(--notifications-bg, var(--surface-panel, rgba(20, 20, 20, 0.85)));
+  --notifications-border-color: var(
+    --notifications-border,
+    var(--toast-info-border, rgba(56, 189, 248, 0.35))
+  );
+  --notifications-shadow: var(--notifications-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  --notifications-text-color: var(--notifications-text, var(--text-color-secondary, #e2e8f0));
+  --notifications-title-color: var(--notifications-title, var(--text-color-primary, #f8fafc));
+  --notifications-close-color: var(--notifications-close, var(--text-color-secondary, #cbd5e1));
+  --notifications-close-hover-color: var(
+    --notifications-close-hover,
+    var(--text-color-primary, #fff)
+  );
+  --notifications-success-bg: var(
+    --notifications-success-bg,
+    var(--toast-success-bg, rgba(36, 147, 79, 0.18))
+  );
+  --notifications-success-border: var(
+    --notifications-success-border,
+    var(--toast-success-border, rgba(36, 147, 79, 0.38))
+  );
+  --notifications-success-text: var(
+    --notifications-success-text,
+    var(--toast-success-text, #9be5be)
+  );
+  --notifications-error-bg: var(
+    --notifications-error-bg,
+    var(--toast-error-bg, rgba(220, 38, 38, 0.16))
+  );
+  --notifications-error-border: var(
+    --notifications-error-border,
+    var(--toast-error-border, rgba(220, 38, 38, 0.38))
+  );
+  --notifications-error-text: var(--notifications-error-text, var(--toast-error-text, #fecaca));
+  --notifications-warning-bg: var(
+    --notifications-warning-bg,
+    var(--toast-warning-bg, rgba(245, 158, 11, 0.12))
+  );
+  --notifications-warning-border: var(
+    --notifications-warning-border,
+    var(--toast-warning-border, rgba(245, 158, 11, 0.35))
+  );
+  --notifications-warning-text: var(
+    --notifications-warning-text,
+    var(--toast-warning-text, #fde68a)
+  );
+  --notifications-info-bg: var(
+    --notifications-info-bg,
+    var(--toast-info-bg, rgba(56, 189, 248, 0.14))
+  );
+  --notifications-info-border: var(
+    --notifications-info-border,
+    var(--toast-info-border, rgba(56, 189, 248, 0.35))
+  );
+  --notifications-info-text: var(--notifications-info-text, var(--toast-info-text, #bae6fd));
+
+  /* Updater */
+  --updater-panel-bg: var(--updater-panel-bg, var(--surface-panel, rgba(20, 20, 20, 0.85)));
+  --updater-panel-border: var(
+    --updater-panel-border,
+    var(--surface-panel-border, rgba(64, 64, 64, 0.5))
+  );
+  --updater-panel-shadow: var(
+    --updater-panel-shadow,
+    0 20px 60px 0 rgba(0, 0, 0, 0.95),
+    0 0 30px var(--status-warning-border, rgba(245, 158, 11, 0.35))
+  );
+  --updater-title-color: var(--updater-title, var(--accent-color, #ffd700));
+  --updater-title-glow: var(
+    --updater-title-glow,
+    var(--status-warning-bg, rgba(245, 158, 11, 0.12))
+  );
+  --updater-changelog-bg: var(
+    --updater-changelog-bg,
+    var(--surface-panel-muted, rgba(0, 0, 0, 0.3))
+  );
+  --updater-changelog-border: var(
+    --updater-changelog-border,
+    var(--border-color, rgba(255, 255, 255, 0.08))
+  );
+  --updater-close-color: var(--updater-close, var(--text-color-muted, #aaa));
+  --updater-close-hover-color: var(--updater-close-hover, var(--text-color-primary, #fff));
+
+  /* Useful tab */
+  --useful-panel-bg: var(--useful-panel-bg, var(--useful-card-bg, #2b2b2b));
+  --useful-panel-shadow: var(--useful-panel-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+  --useful-download-bg: var(--useful-download-bg, var(--action-primary-bg, #3ba475));
+  --useful-download-bg-hover: var(
+    --useful-download-bg-hover,
+    var(--action-primary-bg-hover, #2d8c5f)
+  );
+  --useful-download-text: var(--useful-download-text, #fff);
+  --useful-badge-bg: var(--useful-badge-bg, var(--primary-color, #3ba475));
+  --useful-badge-text: var(--useful-badge-text, #fff);
+  --useful-changelog-header-bg: var(--useful-changelog-header-bg, var(--card-bg, #2b2b2b));
+  --useful-changelog-header-bg-hover: var(
+    --useful-changelog-header-bg-hover,
+    var(--bg-color, #333)
+  );
+
+  /* Hotkeys */
+  --hotkeys-page-bg: var(--hotkeys-bg, rgba(0, 0, 0, 0));
+  --hotkeys-panel-bg: var(--hotkeys-panel-bg, rgba(30, 30, 30, 0.5));
+  --hotkeys-panel-border: var(--hotkeys-panel-border, rgba(0, 0, 0, 0));
+  --hotkeys-modal-backdrop-bg: var(--hotkeys-modal-backdrop, rgba(0, 0, 0, 0.5));
+  --hotkeys-modal-bg: var(--hotkeys-modal-bg, #2a2a2a);
+  --hotkeys-modal-shadow: var(--hotkeys-modal-shadow, 0 2px 10px rgba(0, 0, 0, 0.3));
+  --hotkeys-modal-text: var(--hotkeys-modal-text, #fff);
+  --hotkeys-modal-capture-border: var(--hotkeys-modal-capture-border, #666);
+  --hotkeys-modal-capture-active-border: var(--hotkeys-modal-capture-active-border, #4caf50);
+  --hotkeys-modal-capture-active-bg: var(--hotkeys-modal-capture-active-bg, rgba(76, 175, 80, 0.1));
+  --hotkeys-modal-button-bg: var(--hotkeys-modal-button-bg, #4caf50);
+  --hotkeys-modal-button-bg-hover: var(--hotkeys-modal-button-bg-hover, #45a049);
+  --hotkeys-modal-button-text: var(--hotkeys-modal-button-text, #fff);
+  --hotkeys-modal-clear-bg: var(--hotkeys-modal-clear-bg, #f44336);
+  --hotkeys-modal-clear-bg-hover: var(--hotkeys-modal-clear-bg-hover, #d32f2f);
+  --hotkeys-hotkey-text-shadow-color: var(--hotkeys-hotkey-text-shadow, rgba(0, 0, 0, 0.8));
+
+  /* Footer watcher */
+  --footer-watcher-panel-bg: var(
+    --footer-watcher-panel-bg,
+    var(--surface-overlay, rgba(0, 0, 0, 0.5))
+  );
+  --footer-watcher-panel-shadow: var(--footer-watcher-panel-shadow, 0 2px 10px rgba(0, 0, 0, 0.3));
+  --footer-watcher-section-bg: var(
+    --footer-watcher-section-bg,
+    var(--element-bg-color, rgba(255, 255, 255, 0.05))
+  );
+  --footer-watcher-section-title: var(--footer-watcher-section-title, var(--accent-color, #ffd700));
+  --footer-watcher-section-title-border: var(
+    --footer-watcher-section-title-border,
+    var(--accent-color, #ffd700)
+  );
+  --footer-watcher-key: var(--footer-watcher-key, var(--status-info-text, #bae6fd));
+  --footer-watcher-eye-dark: var(--footer-watcher-eye-dark, #000);
+  --footer-watcher-eye-light: var(--footer-watcher-eye-light, #fff);
+
+  /* Tab surfaces */
+  --gameoptions-bg-color: var(--gameoptions-bg, rgba(0, 0, 0, 0));
+  --visuals-bg-color: var(--visuals-bg, rgba(0, 0, 0, 0));
+  --hpbars-bg-color: var(--hpbars-bg, rgba(0, 0, 0, 0));
+  --hpbars-error-bg-color: var(--hpbars-error-bg, rgba(220, 38, 38, 0.15));
+  --hpbars-error-border-color: var(--hpbars-error-border, rgba(220, 38, 38, 0.4));
+  --hpbars-error-text-color: var(--hpbars-error-text, #fecaca);
+
+  --status-success-bg: var(--toast-success-bg, rgba(36, 147, 79, 0.18));
+  --status-success-border: var(--toast-success-border, rgba(36, 147, 79, 0.38));
+  --status-success-text: var(--toast-success-text, #9be5be);
+  --status-error-bg: var(--toast-error-bg, rgba(220, 38, 38, 0.16));
+  --status-error-border: var(--toast-error-border, rgba(220, 38, 38, 0.38));
+  --status-error-text: var(--toast-error-text, #fecaca);
+  --status-warning-bg: var(--toast-warning-bg, rgba(245, 158, 11, 0.12));
+  --status-warning-border: var(--toast-warning-border, rgba(245, 158, 11, 0.35));
+  --status-warning-text: var(--toast-warning-text, #fde68a);
+  --status-info-bg: var(--toast-info-bg, rgba(56, 189, 248, 0.14));
+  --status-info-border: var(--toast-info-border, rgba(56, 189, 248, 0.35));
+  --status-info-text: var(--toast-info-text, #bae6fd);
+
+  --card-bg: var(--useful-card-bg, #2b2b2b);
+  --bg-color: var(--app-surface-base, #333333);
+  --bg-color-dark: var(--app-panel-bg, #23282e);
+  --bg-color-medium: var(--app-surface-elevated, #2a2a2a);
+  --border-color: var(--app-panel-border, #404040);
+  --text-color: var(--app-text, #ffffff);
+  --text-color-primary: var(--app-text-primary, var(--app-text, #ffffff));
+  --text-color-secondary: var(--app-text-secondary, #cccccc);
+  --text-color-muted: var(--app-text-muted, #aaaaaa);
+  --text-secondary: var(--useful-text-secondary, #b0b0b0);
+  --primary-color: var(--app-primary, #3ba475);
+  --accent-color: var(--app-accent, #ffd700);
+  --error-color: var(--useful-error-fg, #ef5350);
+  --error-bg: var(--useful-error-bg, #2d1f1f);
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
-  src: local(""), url("./Inter-Medium.ttf") format("truetype");
+  src:
+    local(''),
+    url('./Inter-Medium.ttf') format('truetype');
 }
 
 /* Глобальные стили для скроллбара */
@@ -78,6 +403,5 @@
 /* Для Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-bg-thumb-color)
-    var(--scrollbar-bg-track-color);
+  scrollbar-color: var(--scrollbar-bg-thumb-color) var(--scrollbar-bg-track-color);
 }

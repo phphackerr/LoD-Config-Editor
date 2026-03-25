@@ -1,9 +1,8 @@
 <script>
-  // @ts-nocheck
   import { createEventDispatcher } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { getConfigValue, setConfigValue } from '../../lib/store/config';
-  import { isInternalChange } from '../../lib/store/internalChange';
+  import { getConfigValue } from '../../lib/store/config';
+  import { persistControlValue } from './lib/controlPipeline';
   import Base from './Base.svelte';
 
   const dispatch = createEventDispatcher();
@@ -28,6 +27,7 @@
 
   // Uncontrolled mode → внутреннее состояние
   let _value = '';
+  let lastSavedValue = '';
   let prevConfigData = null;
 
   async function loadValue(configAvailable) {
@@ -36,38 +36,47 @@
       return;
     }
 
-    const val = await getConfigValue(section, option, '');
+    const val = String((await getConfigValue(section, option)) || '');
     _value = val;
+    lastSavedValue = val;
   }
 
   async function handleChange(event, configAvailable) {
     if (!configAvailable) return;
 
-    const newValue = event.target.value;
+    const newValue = String(event?.target?.value || '');
+    const previousValue =
+      value !== undefined ? String(value ?? lastSavedValue) : String(lastSavedValue || _value);
+
+    const result = await persistControlValue(
+      section,
+      option,
+      newValue,
+      $t('ERRORS.controls.save_dropdown')
+    );
 
     if (value !== undefined) {
-      // Controlled mode
-      try {
-        isInternalChange.mark();
-        await setConfigValue(section, option, newValue);
+      const nextValue = result.ok ? newValue : previousValue;
+      value = nextValue;
+      _value = nextValue;
+
+      if (result.ok) {
         _value = newValue;
+        lastSavedValue = newValue;
         onUpdate?.(newValue);
-      } catch (err) {
-        console.error('Ошибка сохранения dropdown:', err);
       }
-      dispatch('change', { value: newValue });
+      dispatch('change', { value: nextValue, error: result.error });
       return;
     }
 
-    // Uncontrolled mode
-    try {
-      isInternalChange.mark();
-      await setConfigValue(section, option, newValue);
+    if (result.ok) {
       _value = newValue;
+      lastSavedValue = newValue;
       onUpdate?.(newValue);
-    } catch (err) {
-      console.error('Ошибка сохранения dropdown:', err);
+      return;
     }
+
+    _value = previousValue;
   }
 </script>
 
@@ -164,7 +173,7 @@
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--dd-select-border-color);
     border-radius: 4px;
-    color: var(--color);
+    color: var(--text-color-primary);
     cursor: pointer;
     transition: all 0.2s ease;
   }
@@ -176,25 +185,25 @@
 
   .dropdown select:focus {
     outline: none;
-    border-color: #ffd700;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    border-color: var(--control-focus-border-color, #ffd700);
+    box-shadow: 0 0 0 2px var(--control-focus-ring-color, rgba(255, 215, 0, 0.2));
   }
 
   .dropdown select option {
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--surface-elevated, #2a2a2a);
+    color: var(--text-color-primary, #fff);
   }
 
   .dropdown select:disabled {
-    opacity: 0.5;
+    opacity: var(--control-disabled-opacity, 0.5);
     cursor: not-allowed;
-    border-color: #666;
+    border-color: var(--control-disabled-border-color, #666);
   }
 
   .dropdown.disabled {
     cursor: not-allowed;
-    opacity: 0.5;
-    background: rgba(255, 255, 255, 0.02);
+    opacity: var(--control-disabled-opacity, 0.5);
+    background: var(--control-disabled-bg-color, rgba(255, 255, 255, 0.02));
   }
 
   /* Стилизация скроллбара */

@@ -1,42 +1,41 @@
 <script module>
-    export const tabMetadata = {
-        order: 1,
-    };
+  export const tabMetadata = {
+    order: 1
+  };
 </script>
 
 <script>
-    import CommandPanel from "./components/hotkeys/command-panel.svelte";
-    import InventoryPanel from "./components/hotkeys/inventory-panel.svelte";
-    import OthersPanel from "./components/hotkeys/others-panel.svelte";
-    import { setContext } from "svelte";
+  import CommandPanel from './components/hotkeys/command-panel.svelte';
+  import InventoryPanel from './components/hotkeys/inventory-panel.svelte';
+  import OthersPanel from './components/hotkeys/others-panel.svelte';
+  import { setContext } from 'svelte';
 
-    const tabId = "Hotkeys"; // <-- Убедитесь, что здесь правильное имя для каждого файла!
-    setContext("tabId", tabId);
-
-    // @ts-nocheck
+  const tabId = 'Hotkeys'; // <-- Убедитесь, что здесь правильное имя для каждого файла!
+  setContext('tabId', tabId);
 </script>
 
 <div class="tab">
-    <CommandPanel />
-    <InventoryPanel />
-    <OthersPanel />
+  <CommandPanel />
+  <InventoryPanel />
+  <OthersPanel />
 </div>
 
 <style>
-    .tab {
-        height: 100%;
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1.5fr;
-        gap: 20px;
-        align-items: center;
-        justify-content: space-between;
-        box-sizing: border-box;
-        overflow-y: auto;
-    }
+  .tab {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.5fr;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--hotkeys-page-bg, rgba(0, 0, 0, 0));
+  }
 
-    @media (max-width: 1100px) {
-        .tab {
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        }
+  @media (max-width: 1100px) {
+    .tab {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     }
+  }
 </style>

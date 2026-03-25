@@ -3,6 +3,7 @@ package config_editor
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // KeyCodes — словарь для горячих клавиш (код -> название).
@@ -15,6 +16,8 @@ func initKeyCodes() map[string]string {
 	m["0x04"] = "midlemouse"
 	m["0x05"] = "x1"
 	m["0x06"] = "x2"
+	m["0x0A"] = "wheelUp"
+	m["0x0B"] = "wheelDn"
 
 	// Специальные клавиши
 	m["0x08"] = "backspace"
@@ -106,7 +109,7 @@ func Lookup(code string) string {
 // Полезно, если нужно сохранять обратно в INI.
 func ReverseLookup(name string) string {
 	for code, keyName := range KeyCodes {
-		if keyName == name {
+		if strings.EqualFold(keyName, name) {
 			return code
 		}
 	}

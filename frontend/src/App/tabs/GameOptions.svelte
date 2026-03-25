@@ -5,7 +5,6 @@
 </script>
 
 <script>
-  //@ts-nocheck
   import Checkbox from './components/Checkbox.svelte';
   import Dropdown from './components/Dropdown.svelte';
   import ColorPicker from './components/ColorPicker.svelte';
@@ -113,6 +112,7 @@
     display: flex;
     gap: 20px;
     overflow-y: auto;
+    background: var(--gameoptions-bg-color, rgba(0, 0, 0, 0));
   }
 
   .options-column {
@@ -121,19 +121,19 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    justify-content: space-between; /* Оставляем или меняем на `center` по вертикали, как вам нужно */
-    align-items: center; /* Центрируем `centered-content-wrapper` по горизонтали внутри `options-column` */
+    justify-content: space-between;
+    align-items: center;
   }
 
   .centered-content-wrapper {
-    width: fit-content; /* Ширина обертки по содержимому */
+    width: fit-content;
     height: 100%;
-    margin: 0 auto; /* Центрирует обертку по горизонтали */
-    display: flex; /* Делаем обертку flex-контейнером */
-    flex-direction: column; /* Элементы внутри будут располагаться вертикально */
-    gap: inherit; /* Наследуем gap от родителя (options-column) */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
     justify-content: inherit;
-    align-items: flex-start; /* Выравниваем элементы внутри обертки по левому краю */
+    align-items: flex-start;
   }
 
   @media (max-width: 768px) {

@@ -6,3 +6,9 @@ import * as ConfigEditor from "./configeditor.js";
 export {
     ConfigEditor
 };
+
+export {
+    DiffStatus,
+    KeyDiff,
+    SectionDiff
+} from "./models.js";

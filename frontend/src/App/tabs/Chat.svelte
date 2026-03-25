@@ -5,7 +5,6 @@
 </script>
 
 <script>
-  // @ts-nocheck
   import Chat from './components/Chat.svelte';
   import { setContext } from 'svelte';
 
@@ -71,6 +70,7 @@
     padding: 20px;
     height: 100%;
     box-sizing: border-box;
+    background: var(--chat-bg-color, rgba(0, 0, 0, 0));
   }
 
   .chat-container {

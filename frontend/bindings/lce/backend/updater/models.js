@@ -61,7 +61,7 @@ export class ComponentUpdate {
 }
 
 /**
- * ComponentVersions matches the structure of manifest.json
+ * ComponentVersions matches the structure of manifest.json.
  */
 export class ComponentVersions {
     /**
@@ -79,14 +79,14 @@ export class ComponentVersions {
         if (!("themes" in $$source)) {
             /**
              * @member
-             * @type {{ [_: string]: version$0.ComponentInfo }}
+             * @type {{ [_ in string]?: version$0.ComponentInfo }}
              */
             this["themes"] = {};
         }
         if (!("locales" in $$source)) {
             /**
              * @member
-             * @type {{ [_: string]: version$0.ComponentInfo }}
+             * @type {{ [_ in string]?: version$0.ComponentInfo }}
              */
             this["locales"] = {};
         }

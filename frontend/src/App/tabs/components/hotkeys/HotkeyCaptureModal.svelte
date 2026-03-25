@@ -1,12 +1,13 @@
 <script>
-  // @ts-nocheck
   import { t } from 'svelte-i18n';
   import { setConfigValue } from '../../../lib/store/config';
-  import { encodeKey, normalizeKey } from './keyFuncs';
+  import { encodeKey } from './keyFuncs';
   import { CODE_TO_CANONICAL_KEY } from './keyCodes';
   import Portal from 'svelte-portal';
   import { onMount } from 'svelte';
   import { isInternalChange } from '../../../lib/store/internalChange';
+  import { notifyError } from '../../../lib/store/notifications';
+  import { toErrorMessage } from '../../../lib/store/storeUtils';
 
   export let section = '';
   export let option = '';
@@ -35,11 +36,21 @@
     onclose?.();
   }
 
+  async function saveCapturedHotkey(encoded, display) {
+    try {
+      isInternalChange.mark();
+      await setConfigValue(section, option, encoded);
+      displayText = display;
+      stopCapture();
+      return true;
+    } catch (error) {
+      notifyError(toErrorMessage(error, $t('ERRORS.hotkeys.save')));
+      return false;
+    }
+  }
+
   async function clearHotkey() {
-    isInternalChange.mark();
-    await setConfigValue(section, option, '');
-    displayText = $t('HOTKEYS.press_any_key');
-    stopCapture();
+    await saveCapturedHotkey('', $t('HOTKEYS.press_any_key'));
   }
 
   function getModifierDisplayString() {
@@ -47,6 +58,22 @@
     if (activeModifiers.ctrl) parts.push('Ctrl');
     if (activeModifiers.alt) parts.push('Alt');
     if (activeModifiers.shift) parts.push('Shift');
+    return parts.join(' + ');
+  }
+
+  function keyDisplayName(canonicalKey) {
+    if (canonicalKey === 'space') return 'Space';
+    if (canonicalKey === 'wheelup') return 'wheelUp';
+    if (canonicalKey === 'wheeldn') return 'wheelDn';
+    return canonicalKey.toUpperCase();
+  }
+
+  function buildDisplayWithActiveModifiers(keyName) {
+    const parts = [];
+    if (activeModifiers.ctrl) parts.push('Ctrl');
+    if (activeModifiers.alt) parts.push('Alt');
+    if (activeModifiers.shift) parts.push('Shift');
+    parts.push(keyName);
     return parts.join(' + ');
   }
 
@@ -78,19 +105,9 @@
     if (!isCurrentKeyModifier) {
       // Была нажата не-модификаторная клавиша
       hasNonModifierBeenPressed = true;
-
-      const parts = [];
-      if (activeModifiers.ctrl) parts.push('Ctrl');
-      if (activeModifiers.alt) parts.push('Alt');
-      if (activeModifiers.shift) parts.push('Shift');
-      parts.push(canonicalKey === 'space' ? 'Space' : canonicalKey.toUpperCase());
-
-      const display = parts.join(' + ');
+      const display = buildDisplayWithActiveModifiers(keyDisplayName(canonicalKey));
       const encoded = encodeKey(display);
-      displayText = display;
-      isInternalChange.mark();
-      await setConfigValue(section, option, encoded);
-      stopCapture(); // Завершаем захват сразу
+      await saveCapturedHotkey(encoded, display);
     } else {
       // Нажата только модификаторная клавиша (или модификатор, который уже был зажат)
       // Обновляем только отображаемый текст
@@ -132,10 +149,8 @@
       // и у нас есть последняя записанная комбинация модификаторов
       // (это означает, что была нажата чистая комбинация модификаторов)
       const encoded = encodeKey(lastRecordedModifierDisplay);
-      displayText = lastRecordedModifierDisplay; // Отображаем комбинацию, которую сохраняем
-      isInternalChange.mark();
-      await setConfigValue(section, option, encoded);
-      stopCapture(); // Сохраняем и закрываем модальное окно
+      const saved = await saveCapturedHotkey(encoded, lastRecordedModifierDisplay);
+      if (!saved) return;
       // Сбрасываем флаги
       hasNonModifierBeenPressed = false;
       lastRecordedModifierDisplay = '';
@@ -150,6 +165,27 @@
     // это значит, что этот не-модификатор не был обработан в keydown (что странно)
     // или это какая-то другая клавиша, которую мы не отслеживаем.
     // В этом случае просто игнорируем.
+  }
+
+  async function handleWheel(event) {
+    if (!isCapturing) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const wheelCanonicalKey = event.deltaY < 0 ? 'wheelup' : event.deltaY > 0 ? 'wheeldn' : '';
+    if (!wheelCanonicalKey) {
+      return;
+    }
+
+    activeModifiers.ctrl = event.ctrlKey;
+    activeModifiers.alt = event.altKey;
+    activeModifiers.shift = event.shiftKey;
+    hasNonModifierBeenPressed = true;
+
+    const display = buildDisplayWithActiveModifiers(keyDisplayName(wheelCanonicalKey));
+    const encoded = encodeKey(display);
+    await saveCapturedHotkey(encoded, display);
   }
 
   onMount(() => {
@@ -168,6 +204,7 @@
     tabindex="0"
     on:keydown={handleKeyDown}
     on:keyup={handleKeyUp}
+    on:wheel={handleWheel}
     on:click={stopCapture}
   >
     <div class="modal-content" on:click|stopPropagation role="presentation">
@@ -196,40 +233,40 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--hotkeys-modal-backdrop-bg, rgba(0, 0, 0, 0.5));
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
   }
   .modal-content {
-    background: #2a2a2a;
+    background: var(--hotkeys-modal-bg, #2a2a2a);
     border-radius: 8px;
     padding: 20px;
     min-width: 300px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--hotkeys-modal-shadow, 0 2px 10px rgba(0, 0, 0, 0.3));
   }
   .modal-header h3 {
     margin: 0;
-    color: #fff;
+    color: var(--hotkeys-modal-text, #fff);
   }
   .modal-body {
     margin: 20px 0;
   }
   .capture-area {
     padding: 20px;
-    border: 2px dashed #666;
+    border: 2px dashed var(--hotkeys-modal-capture-border, #666);
     border-radius: 4px;
     text-align: center;
-    color: #fff;
+    color: var(--hotkeys-modal-text, #fff);
     min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .capturing {
-    border-color: #4caf50;
-    background: rgba(76, 175, 80, 0.1);
+    border-color: var(--hotkeys-modal-capture-active-border, #4caf50);
+    background: var(--hotkeys-modal-capture-active-bg, rgba(76, 175, 80, 0.1));
   }
   .modal-footer {
     display: flex;
@@ -240,17 +277,17 @@
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
-    background: #4caf50;
-    color: white;
+    background: var(--hotkeys-modal-button-bg, #4caf50);
+    color: var(--hotkeys-modal-button-text, #fff);
     cursor: pointer;
   }
   button:hover {
-    background: #45a049;
+    background: var(--hotkeys-modal-button-bg-hover, #45a049);
   }
   .clear-button {
-    background: #f44336;
+    background: var(--hotkeys-modal-clear-bg, #f44336);
   }
   .clear-button:hover {
-    background: #d32f2f;
+    background: var(--hotkeys-modal-clear-bg-hover, #d32f2f);
   }
 </style>

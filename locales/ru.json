@@ -7,12 +7,15 @@
     "settings_tooltip": "Настройки",
     "minimize_tooltip": "Свернуть",
     "maximize_tooltip": "Развернуть",
-    "close_tooltip": "Закрыть"
+    "close_tooltip": "Закрыть",
+    "search_hotkey_label": "Ctrl + F",
+    "search_hotkey_tooltip": "Фокус на поиск (Ctrl + F)"
   },
   "SETTINGS": {
     "settings": "Настройки",
     "GENERAL": {
-      "general_tab": "Общее"
+      "general_tab": "Общее",
+      "windowed_mode": "Оконный режим"
     },
     "PATHS": {
       "paths_tab": "Пути",
@@ -20,15 +23,50 @@
       "add_folder_tooltip": "Добавить папку",
       "paths_not_found": "Конфигурационный файл не найден. Пожалуйста, выберите путь к файлу конфигурации.",
       "run_scanner": "Сканировать",
-      "scanning": "Поиск путей..."
+      "scanning": "Поиск путей...",
+      "path_added": "Путь к игре добавлен",
+      "path_already_added": "Этот путь уже есть в списке",
+      "select_game_folder_title": "Выберите папку игры"
     },
     "LANGUAGE": {
       "language_tab": "Язык",
-      "lang": "Язык"
+      "lang": "Язык",
+      "tools": "Инструменты",
+      "add_language": "Добавить язык",
+      "translator": "Переводчик",
+      "open_folder": "Открыть папку",
+      "add_new_language": "Добавить новый язык",
+      "code_placeholder": "Код (напр. 'fr')",
+      "name_placeholder": "Название (напр. 'French')",
+      "author_placeholder": "Автор",
+      "create": "Создать",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "close": "Закрыть",
+      "search_placeholder": "Поиск ключей/значений...",
+      "key": "Ключ",
+      "status_created": "создан",
+      "status_selected": "выбран",
+      "example_code": "fr",
+      "example_name": "Русский",
+      "example_author": "Ваше имя"
     },
     "THEME": {
       "theme_tab": "Тема",
-      "theme_tooltip": "Тема"
+      "theme_tooltip": "Тема",
+      "tools": "Инструменты",
+      "add_theme": "Добавить тему",
+      "editor": "Редактор",
+      "open_folder": "Открыть папку",
+      "add_new_theme": "Добавить новую тему",
+      "name_placeholder": "Название (напр. 'dark-blue')",
+      "base_theme": "Базовая тема",
+      "saved_success": "Тема успешно сохранена!",
+      "no_themes_found": "Темы не найдены",
+      "status_applied": "применена",
+      "status_created": "создана",
+      "theme_prefix": "Тема",
+      "example_name": "my-theme"
     },
     "ABOUT": {
       "about_tab": "О программе",
@@ -45,6 +83,57 @@
       "translators": "Переводчики",
       "thanks": "Благодарности",
       "thanksD": "Большое спасибо всем, кто помогает проекту"
+    },
+    "LANGUAGE_EDITOR": {
+      "saved_prefix": "Сохранены",
+      "saved_suffix": "переводы",
+      "title": "Редактор языка"
+    },
+    "THEME_EDITOR": {
+      "add_layer": "Добавить слой",
+      "add_stop": "Добавить стоп",
+      "alpha": "Альфа",
+      "alpha_short": "A",
+      "amount": "Значение",
+      "angle": "Угол",
+      "apply_json": "Применить JSON",
+      "blur": "Размытие",
+      "color": "Цвет",
+      "derived": "Производный",
+      "derived_hint": "alpha ограничивается 0..1, lighten/darken используют дельту RGB.",
+      "derived_only_for_color": "Производные значения поддерживаются только для цветовых токенов",
+      "from_token": "Из токена",
+      "hue_short": "H",
+      "inset": "Внутренняя тень",
+      "kind": "Тип",
+      "layer": "Слой",
+      "literal": "Литерал",
+      "literal_json": "Литеральный JSON",
+      "literal_json_object_required": "Literal JSON должен быть объектом",
+      "loading_theme": "Загрузка темы",
+      "no_color_tokens": "Нет цветовых токенов",
+      "no_compatible_ref_tokens": "Нет совместимых токенов для ссылки",
+      "no_tokens_found": "Токены не найдены",
+      "none": "(нет)",
+      "operation": "Операция",
+      "pick": "Пипетка",
+      "position": "Позиция",
+      "preview": "Превью",
+      "preview_hint": "Кнопки / панели / статусы",
+      "ref": "Ссылка",
+      "reference_token": "Токен-ссылка",
+      "reset_done": "Черновик темы сброшен",
+      "search_token": "Поиск токена...",
+      "select_token": "Выберите токен",
+      "spread": "Растяжение",
+      "stop": "Стоп",
+      "title": "Редактор темы",
+      "tokens": "Токены",
+      "unit": "Единица",
+      "unresolved_color": "Не удалось разрешить цветовое значение для выбранного состояния",
+      "unresolved_number": "Не удалось разрешить числовое значение для выбранного состояния",
+      "color_input_placeholder": "rgba(255, 120, 60, 0.8)",
+      "hex_input_placeholder": "#ff7800"
     }
   },
   "HOTKEYS": {
@@ -192,6 +281,7 @@
     "watercolor": "Цвет воды",
     "fogdensity": "Прозрачность тумана на миникарте",
     "chatmessageduration": "Длительность сообщений в чате",
+    "uitextscale": "Масштаб текста интерфейса",
     "cameraheight": "Высота камеры",
     "cameraangle": "Угол камеры",
     "TOOLTIPS": {
@@ -231,7 +321,8 @@
       "showfullwardradiusplague_tooltip": "Изменяет курсор на круговой при наведении Plague Wardс радиусом, равным дальности атаки варда",
       "showfullwardradiusnether_tooltip": "Изменяет курсор на круговой при наведении Nether Wardс радиусом, равным дальности ауры варда",
       "showfullwardradiusTombstone_tooltip": "Изменяет курсор на круговой при наведении Tombstoneс радиусом, равным дальности атаки варда",
-      "showfullwardradiusIcySpirit_tooltip": "Изменяет курсор на круговой при наведении Icy Spiritс радиусом, равным дальности атаки варда"
+      "showfullwardradiusIcySpirit_tooltip": "Изменяет курсор на круговой при наведении Icy Spiritс радиусом, равным дальности атаки варда",
+      "uitextscale_tooltip": "Масштаб текста интерфейса в игре. По умолчанию: 0.8, диапазон: 0.2..2.0."
     }
   },
   "HPBARS": {
@@ -275,9 +366,15 @@
     "downloading": "Идёт загрузка",
     "loading": "Загружается",
     "download": "Скачать",
+    "pause": "Пауза",
+    "resume": "Продолжить",
+    "stop": "Остановить",
+    "paused": "Пауза",
+    "stopping": "Остановка",
     "map_not_found": "Карта не найдена",
     "loading_map_info": "Обновляю информацию",
-    "changelog": "Изменения для"
+    "changelog": "Изменения для",
+    "loading_changelog": "Загрузка списка изменений"
   },
   "ACTIONS": {
     "open_game_folder": "Открыть папку игры",
@@ -288,7 +385,11 @@
     "external_changes": "Внешние изменения",
     "accept_changes": "Принять изменения",
     "discard_changes": "Отклонить изменения",
-    "watcher_working": "Работает"
+    "watcher_working": "Работает",
+    "section_status": "секция",
+    "value_deleted": "удалено",
+    "value_empty": "пусто",
+    "value_missing": "отсутствует"
   },
   "UPDATER": {
     "update_available": "Доступно обновление",
@@ -299,5 +400,152 @@
     "component_updates": "Обновления компонентов",
     "update": "Обновить",
     "downloading_progress": "Загрузка..."
+  },
+  "COMMON": {
+    "close": "Закрыть",
+    "confirm": "Подтвердить",
+    "creating": "Создание",
+    "edit": "Редактировать",
+    "loading": "Загрузка",
+    "remove": "Удалить",
+    "reset": "Сброс",
+    "save": "Сохранить",
+    "saving": "Сохранение",
+    "search": "Поиск...",
+    "state": "Состояние",
+    "type": "Тип",
+    "unknown": "Неизвестно",
+    "value": "Значение",
+    "dismiss_notification": "Скрыть уведомление"
+  },
+  "CONTROLS": {
+    "hex": "HEX",
+    "hue": "Оттенок",
+    "toggle_value_type": "Переключить тип значения"
+  },
+  "ERRORS": {
+    "about": {
+      "app_version": "Не удалось получить версию приложения",
+      "discord_stats": "Не удалось получить статистику Discord"
+    },
+    "actions": {
+      "launch_game": "Не удалось запустить игру",
+      "open_config_file": "Не удалось открыть файл конфига",
+      "open_game_folder": "Не удалось открыть папку игры"
+    },
+    "app_settings": {
+      "delete_path": "Не удалось удалить путь к игре",
+      "get_setting": "Не удалось получить настройку приложения",
+      "load": "Не удалось загрузить настройки приложения",
+      "reset": "Не удалось сбросить настройки приложения",
+      "run_scanner": "Не удалось запустить сканер путей",
+      "update": "Не удалось обновить настройки приложения"
+    },
+    "config": {
+      "check_availability": "Не удалось проверить доступность конфига",
+      "load": "Не удалось загрузить конфиг",
+      "save_option": "Не удалось сохранить [{section}] {option}",
+      "stale_load_ignored": "Устаревшая загрузка конфига проигнорирована"
+    },
+    "controls": {
+      "invalid_target": "Некорректная цель контрола",
+      "key_not_found": "Ключ не найден",
+      "save_chat": "Не удалось сохранить значение чата",
+      "save_checkbox": "Не удалось сохранить значение чекбокса",
+      "save_color": "Не удалось сохранить значение цвета",
+      "save_dropdown": "Не удалось сохранить значение списка",
+      "save_slider": "Не удалось сохранить значение слайдера"
+    },
+    "hotkeys": {
+      "load_value": "Не удалось загрузить хоткей",
+      "save": "Не удалось сохранить хоткей"
+    },
+    "hpbars": {
+      "load_settings": "Не удалось загрузить настройки HP bars"
+    },
+    "i18n": {
+      "create_language": "Не удалось создать язык \"{code}\"",
+      "init": "Не удалось инициализировать локализацию",
+      "language_code_and_name_required": "Код и название языка обязательны",
+      "load_languages": "Не удалось загрузить языки",
+      "load_locale": "Не удалось загрузить локаль {code}",
+      "load_selected_translations": "Не удалось загрузить переводы для выбранных языков",
+      "load_translations": "Не удалось загрузить переводы для \"{code}\"",
+      "save_translations": "Не удалось сохранить переводы для \"{code}\"",
+      "saved_but_reload_failed": "Перевод сохранён, но не удалось перезагрузить текущий язык"
+    },
+    "language": {
+      "apply": "Не удалось применить язык",
+      "open_editor": "Не удалось открыть редактор языков",
+      "open_folder": "Не удалось открыть папку локалей",
+      "save_setting": "Не удалось сохранить язык в настройках приложения"
+    },
+    "paths": {
+      "add_path": "Не удалось добавить путь",
+      "delete_path": "Не удалось удалить путь",
+      "open_folder": "Не удалось открыть папку",
+      "pick_folder": "Не удалось выбрать папку",
+      "run_scanner": "Не удалось запустить сканер",
+      "scan_folders": "Не удалось просканировать папки игры",
+      "select_game_path": "Не удалось выбрать путь к игре",
+      "update_game_path": "Не удалось обновить путь к игре"
+    },
+    "search": {
+      "invalid_item": "Некорректный поисковый элемент",
+      "invalid_item_id": "Некорректный id поискового элемента",
+      "invalid_item_update": "Некорректное обновление поискового элемента"
+    },
+    "theme": {
+      "apply": "Не удалось применить тему \"{theme}\"",
+      "apply_initial": "Не удалось применить стартовую тему \"{theme}\"",
+      "compile": "Не удалось скомпилировать тему \"{theme}\"",
+      "create": "Не удалось создать тему \"{theme}\"",
+      "load_theme": "Не удалось загрузить тему \"{theme}\"",
+      "load_themes": "Не удалось загрузить темы",
+      "name_required": "Название темы обязательно",
+      "open_folder": "Не удалось открыть папку тем",
+      "refresh": "Не удалось обновить тему \"{theme}\"",
+      "save": "Не удалось сохранить тему \"{theme}\"",
+      "save_selected": "Не удалось сохранить выбранную тему в настройках"
+    },
+    "theme_editor": {
+      "no_opened_theme": "Нет открытой темы для сохранения",
+      "no_source_theme": "Нет исходной темы для сброса",
+      "open": "Не удалось открыть тему \"{theme}\"",
+      "reset": "Не удалось сбросить черновик темы",
+      "save": "Не удалось сохранить тему \"{theme}\"",
+      "save_apply_failed": "Тема \"{theme}\" сохранена, но применить её не удалось",
+      "stale_open_ignored": "Устаревший запрос открытия темы проигнорирован",
+      "theme_id_required": "Требуется id темы",
+      "token_id_required": "Требуется id токена",
+      "token_not_found": "Токен \"{token}\" не найден",
+      "token_updater_required": "Функция обновления токена должна быть функцией"
+    },
+    "updater": {
+      "check_updates": "Не удалось проверить обновления",
+      "download_update": "Не удалось скачать обновление",
+      "invalid_component_request": "Некорректный запрос обновления компонента",
+      "restart_app": "Не удалось перезапустить приложение",
+      "update_component": "Не удалось обновить компонент",
+      "version_required": "Требуется версия обновления"
+    },
+    "useful": {
+      "download_map": "Не удалось скачать карту",
+      "load_map_info": "Не удалось загрузить информацию о карте"
+    },
+    "watcher": {
+      "apply_external_changes": "Не удалось применить внешние изменения конфига",
+      "callback_failed": "Ошибка колбэка изменения конфига",
+      "check_external_changes": "Не удалось проверить внешние изменения конфига",
+      "discard_external_changes": "Не удалось отклонить внешние изменения конфига",
+      "path_required": "Требуется путь для watcher конфига",
+      "reload_after_apply": "Не удалось перезагрузить конфиг после применения изменений",
+      "reload_after_discard": "Не удалось перезагрузить конфиг после отклонения изменений",
+      "restart": "Не удалось перезапустить watcher",
+      "start": "Не удалось запустить watcher конфига",
+      "stop": "Не удалось остановить watcher",
+      "stop_previous": "Не удалось остановить предыдущий watcher"
+    },
+    "unexpected": "Непредвиденная ошибка"
   }
 }

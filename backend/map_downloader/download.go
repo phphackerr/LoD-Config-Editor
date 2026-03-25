@@ -1,6 +1,8 @@
 package map_downloader
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"lce/backend/app_settings"
@@ -50,33 +52,138 @@ func (md *MapDownloader) DownloadMap(mapInfo MapInfo) (MapMetadata, error) {
 		return MapMetadata{}, fmt.Errorf("MapDownloader не инициализирован: %w", err)
 	}
 
-	fileName := mapInfo.Name
-	if !strings.HasSuffix(strings.ToLower(fileName), ".w3x") && !strings.HasSuffix(strings.ToLower(fileName), ".w3m") {
-		fileName += ".w3x"
-	}
-	filePath := filepath.Join(md.mapsDir, fileName)
-
-	resp, err := md.client.Get(mapInfo.DownloadURL)
+	downloadCtx, err := md.beginDownloadControl()
 	if err != nil {
-		return MapMetadata{}, fmt.Errorf("ошибка HTTP-запроса при загрузке: %w", err)
+		return MapMetadata{}, err
+	}
+	defer md.endDownloadControl()
+
+	currentInfo := mapInfo
+	var lastErr error
+
+	for attempt := 1; attempt <= downloadMapAttempts; attempt++ {
+		filePath, partPath := md.resolveDownloadTarget(currentInfo)
+		_ = os.Remove(partPath)
+
+		result, err := md.downloadMapOnce(downloadCtx, currentInfo, filePath, partPath)
+		if err == nil {
+			return result, nil
+		}
+		if isStoppedError(err) {
+			return MapMetadata{}, err
+		}
+		lastErr = err
+
+		_ = os.Remove(partPath)
+
+		if attempt == downloadMapAttempts || !isRetryableRequestError(err) {
+			return MapMetadata{}, err
+		}
+
+		refreshedInfo, refreshErr := md.tryRefreshDownloadInfo(currentInfo)
+		if refreshErr == nil {
+			if refreshedInfo.DownloadURL != "" && refreshedInfo.DownloadURL != currentInfo.DownloadURL {
+				currentInfo = refreshedInfo
+				log.Printf("DownloadMap: получена свежая ссылка, повтор без задержки")
+				continue
+			}
+			currentInfo = refreshedInfo
+		} else {
+			log.Printf("DownloadMap: не удалось обновить ссылку на карту перед повтором: %v", refreshErr)
+		}
+
+		delay := retryDelay(attempt)
+		log.Printf("DownloadMap: ошибка попытки %d/%d: %v. Повтор через %s", attempt, downloadMapAttempts, err, delay)
+		select {
+		case <-downloadCtx.Done():
+			if md.isStopRequested() {
+				return MapMetadata{}, errDownloadStopped
+			}
+		case <-time.After(delay):
+		}
+	}
+
+	return MapMetadata{}, lastErr
+}
+
+func (md *MapDownloader) resolveDownloadTarget(mapInfo MapInfo) (filePath string, partPath string) {
+	fileName := mapFileName(mapInfo.Name)
+	filePath = filepath.Join(md.mapsDir, fileName)
+	return filePath, filePath + ".part"
+}
+
+func (md *MapDownloader) tryRefreshDownloadInfo(currentInfo MapInfo) (MapInfo, error) {
+	freshInfo, err := md.fetchMapInfoOnce()
+	if err != nil {
+		return currentInfo, err
+	}
+
+	if freshInfo.DownloadURL == "" {
+		return currentInfo, fmt.Errorf("обновление ссылки на карту вернуло пустой URL")
+	}
+
+	if freshInfo.Name == "" {
+		freshInfo.Name = currentInfo.Name
+	}
+	if freshInfo.Version == "" {
+		freshInfo.Version = currentInfo.Version
+	}
+	if freshInfo.Size == 0 {
+		freshInfo.Size = currentInfo.Size
+	}
+
+	return freshInfo, nil
+}
+
+func readResponseSnippet(body io.Reader, maxBytes int64) string {
+	if body == nil || maxBytes <= 0 {
+		return ""
+	}
+
+	data, err := io.ReadAll(io.LimitReader(body, maxBytes))
+	if err != nil || len(data) == 0 {
+		return ""
+	}
+
+	flattened := strings.Join(strings.Fields(string(data)), " ")
+	if len(flattened) > 180 {
+		return flattened[:180] + "..."
+	}
+	return flattened
+}
+
+func (md *MapDownloader) downloadMapOnce(downloadCtx context.Context, mapInfo MapInfo, filePath string, partPath string) (MapMetadata, error) {
+	resp, err := md.getWithContextTimeout(downloadCtx, mapInfo.DownloadURL, downloadMapTimeout)
+	if err != nil {
+		return MapMetadata{}, stopAwareWrap("ошибка HTTP-запроса при загрузке", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return MapMetadata{}, fmt.Errorf("получен не-200 статус код при загрузке: %d", resp.StatusCode)
+		snippet := readResponseSnippet(resp.Body, 512)
+		contextMessage := "получен не-200 статус код при загрузке"
+		if snippet != "" {
+			contextMessage = fmt.Sprintf("%s (%s)", contextMessage, snippet)
+		}
+		return MapMetadata{}, &httpStatusError{
+			StatusCode: resp.StatusCode,
+			Context:    contextMessage,
+		}
 	}
 
-	file, err := os.Create(filePath)
+	file, err := os.Create(partPath)
 	if err != nil {
 		return MapMetadata{}, fmt.Errorf("не удалось создать файл карты: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	totalSize := mapInfo.Size
 	if totalSize == 0 {
 		// Попытка получить Content-Length, если размер не был в mapInfo
 		if contentLength := resp.Header.Get("Content-Length"); contentLength != "" {
-			if s, err := strconv.ParseInt(contentLength, 10, 64); err == nil {
+			if s, parseErr := strconv.ParseInt(contentLength, 10, 64); parseErr == nil {
 				totalSize = s
 			}
 		}
@@ -89,10 +196,16 @@ func (md *MapDownloader) DownloadMap(mapInfo MapInfo) (MapMetadata, error) {
 	buffer := make([]byte, 32*1024) // Буфер 32KB
 
 	for {
+		if err := md.waitWhilePaused(); err != nil {
+			_ = os.Remove(partPath)
+			return MapMetadata{}, err
+		}
+
 		n, err := resp.Body.Read(buffer)
 		if n > 0 {
 			_, writeErr := file.Write(buffer[:n])
 			if writeErr != nil {
+				_ = os.Remove(partPath)
 				return MapMetadata{}, fmt.Errorf("ошибка записи в файл: %w", writeErr)
 			}
 			downloadedBytes += int64(n)
@@ -102,6 +215,10 @@ func (md *MapDownloader) DownloadMap(mapInfo MapInfo) (MapMetadata, error) {
 			break // Конец файла
 		}
 		if err != nil {
+			_ = os.Remove(partPath)
+			if errors.Is(err, context.Canceled) || md.isStopRequested() {
+				return MapMetadata{}, errDownloadStopped
+			}
 			return MapMetadata{}, fmt.Errorf("ошибка чтения из ответа: %w", err)
 		}
 
@@ -115,7 +232,7 @@ func (md *MapDownloader) DownloadMap(mapInfo MapInfo) (MapMetadata, error) {
 				progress := (float64(downloadedBytes) / float64(totalSize)) * 100.0
 
 				// Отправляем прогресс во фронтенд
-				md.app.Event.Emit("download-progress", DownloadProgressEvent{
+				md.emitDownloadProgress(DownloadProgressEvent{
 					Progress:   progress,
 					Downloaded: downloadedBytes,
 					Total:      totalSize,
@@ -126,6 +243,29 @@ func (md *MapDownloader) DownloadMap(mapInfo MapInfo) (MapMetadata, error) {
 				lastBytes = downloadedBytes
 			}
 		}
+	}
+
+	if err := file.Sync(); err != nil {
+		_ = os.Remove(partPath)
+		return MapMetadata{}, fmt.Errorf("не удалось синхронизировать файл карты: %w", err)
+	}
+	if err := file.Close(); err != nil {
+		_ = os.Remove(partPath)
+		return MapMetadata{}, fmt.Errorf("не удалось закрыть временный файл карты: %w", err)
+	}
+
+	if totalSize > 0 {
+		md.emitDownloadProgress(DownloadProgressEvent{
+			Progress:   100.0,
+			Downloaded: downloadedBytes,
+			Total:      totalSize,
+			Speed:      0,
+		})
+	}
+
+	if err := os.Rename(partPath, filePath); err != nil {
+		_ = os.Remove(partPath)
+		return MapMetadata{}, fmt.Errorf("не удалось переименовать временный файл карты: %w", err)
 	}
 
 	log.Println("Карта успешно загружена")

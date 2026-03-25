@@ -1,176 +1,288 @@
 package map_downloader
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-// parseMapInfos парсит информацию о картах из HTML-документа.
-// Возвращает список кортежей: (name, version, download_link, date, size)
-func (md *MapDownloader) parseMapInfos(htmlContent string) ([]struct {
-	Header       string
+const (
+	epicwarBaseURL    = "https://www.epicwar.com"
+	epicwarSearchURL  = epicwarBaseURL + "/maps/?sort=time&order=desc&a=Vordik"
+	defaultMapVersion = "v1.0"
+)
+
+var (
+	dateRegex            = regexp.MustCompile(`\d{1,2}\s+[A-Za-z]{3}\s+\d{4}`)
+	versionRegex         = regexp.MustCompile(`(?i)\bv(\d+\.\d+[a-z]?)\b`)
+	sizeRegex            = regexp.MustCompile(`\((\d+(?:\.\d+)?)\s*(B|KB|MB|GB)\)`)
+	mapDownloadPathRegex = regexp.MustCompile(`/maps/(\d+)/download/?`)
+	errNoMapsFound       = errors.New("не найдено ни одной карты")
+)
+
+type parsedMapInfo struct {
 	Name         string
 	Version      string
 	DownloadLink string
 	Date         string
-	Size         int64 // Используем int64
-}, error) {
+	Size         int64
+}
+
+// parseMapInfos parses map metadata from EpicWar HTML.
+func (md *MapDownloader) parseMapInfos(htmlContent string) ([]parsedMapInfo, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
 	if err != nil {
 		return nil, fmt.Errorf("не удалось создать goquery документ: %w", err)
 	}
 
-	var results []struct {
-		Header       string
-		Name         string
-		Version      string
-		DownloadLink string
-		Date         string
-		Size         int64
-	}
+	results := make([]parsedMapInfo, 0, 8)
+	seenMaps := make(map[string]struct{}, 8)
 
-	// Стратегия: Ищем ссылки на скачивание.
-	// URL имеет вид: /maps/12345/download/?token=...
-	// Селектор [href*='/maps/download/'] ищет точное совпадение подстроки, которого нет.
-	// Поэтому ищем просто по наличию "/download/"
-	doc.Find("a[href*='/download/']").Each(func(i int, s *goquery.Selection) {
-		downloadLink, _ := s.Attr("href")
-		
-		// Проверяем, что это действительно ссылка на карту (содержит /maps/)
-		if !strings.Contains(downloadLink, "/maps/") {
+	doc.Find("a[href*='/download/']").Each(func(_ int, s *goquery.Selection) {
+		downloadLink, ok := s.Attr("href")
+		if !ok {
 			return
 		}
-		
-		// Ищем контейнер. Поднимаемся вверх, пока не найдем контейнер, в котором есть ДРУГАЯ ссылка на /maps/ (имя карты)
-		var container *goquery.Selection
-		var nameLink *goquery.Selection
 
-		// Пробуем 3 уровня вверх
-		curr := s.Parent()
-		for k := 0; k < 3; k++ {
-			// Ищем ссылку на карту (не скачивание, не картинка)
-			candidate := curr.Find("a[href^='/maps/']").FilterFunction(func(_ int, sel *goquery.Selection) bool {
-				h, _ := sel.Attr("href")
-				return !strings.Contains(h, "/download/") && strings.TrimSpace(sel.Text()) != "" && sel.Find("img").Length() == 0
-			}).First()
-
-			if candidate.Length() > 0 {
-				container = curr
-				nameLink = candidate
-				break
-			}
-			curr = curr.Parent()
+		normalizedLink, err := normalizeDownloadURL(downloadLink)
+		if err != nil {
+			return
 		}
 
-		if container == nil || nameLink == nil {
-			return // Не нашли контейнер или имя
+		mapID := extractMapID(normalizedLink)
+		if mapID == "" {
+			return
 		}
 
-		name := strings.TrimSpace(nameLink.Text())
-
-		// Дата обычно в соседней ячейке (следующей или через одну)
-		// Если мы в td, то дата в td:nth-child(4) (по старой логике) или просто в следующей ячейке?
-		// В новой верстке:
-		// td[2] -> Name + Download
-		// td[3] -> Category
-		// td[4] -> Date
-		// Попробуем найти строку (tr) и в ней дату
-		row := container.Parent()
-		date := ""
-		if row.Is("tr") {
-			date = strings.TrimSpace(row.Find("td:nth-child(4)").Text())
+		if _, exists := seenMaps[mapID]; exists {
+			return
 		}
-		// Если дата пустая, пробуем найти просто текст похожий на дату в контейнере или рядом
-		if date == "" {
-			// Fallback: ищем текст даты (DD Mon YYYY)
-			dateRegex := regexp.MustCompile(`\d{1,2}\s+[A-Za-z]{3}\s+\d{4}`)
-			date = dateRegex.FindString(container.Parent().Text())
+		seenMaps[mapID] = struct{}{}
+
+		record := findMapRecordContainer(s, mapID)
+		if record.Length() == 0 {
+			return
 		}
 
-		// Определяем версию
-		version := "v1.0"
-		versionRegex := regexp.MustCompile(`v(\d+\.\d+[a-z]?)`)
-		if matches := versionRegex.FindStringSubmatch(name); len(matches) > 0 {
-			version = matches[0]
+		name := strings.TrimSpace(findMapNameLink(record, mapID).Text())
+		if name == "" {
+			name = strings.TrimSpace(s.Text())
+		}
+		if name == "" {
+			return
 		}
 
-		// Размер. Он находится в текстовом узле рядом со ссылкой скачивания в том же контейнере.
-		// Текст контейнера: "DotA ... (145.54 MB)"
-		containerText := container.Text()
-		sizeRegex := regexp.MustCompile(`\((\d+\.?\d*)\s*(B|KB|MB|GB)\)`)
-		size := int64(0)
-		sizeMatches := sizeRegex.FindStringSubmatch(containerText)
-		if len(sizeMatches) > 2 {
-			valueStr := sizeMatches[1]
-			unit := sizeMatches[2]
-			value, err := strconv.ParseFloat(valueStr, 64)
-			if err == nil {
-				var bytes float64
-				switch unit {
-				case "B":
-					bytes = value
-				case "KB":
-					bytes = value * 1024.0
-				case "MB":
-					bytes = value * 1024.0 * 1024.0
-				case "GB":
-					bytes = value * 1024.0 * 1024.0 * 1024.0
-				}
-				size = int64(bytes)
-			}
+		date := extractMapDate(record)
+
+		size := parseMapSize(record.Text())
+		if size == 0 {
+			size = parseMapSize(s.Parent().Text())
 		}
 
-		results = append(results, struct {
-			Header       string
-			Name         string
-			Version      string
-			DownloadLink string
-			Date         string
-			Size         int64
-		}{
-			Header:       name,
+		results = append(results, parsedMapInfo{
 			Name:         name,
-			Version:      version,
-			DownloadLink: downloadLink,
+			Version:      extractVersion(name),
+			DownloadLink: normalizedLink,
 			Date:         date,
 			Size:         size,
 		})
 	})
 
 	if len(results) == 0 {
-		return nil, fmt.Errorf("не найдено ни одной карты")
+		return nil, fmt.Errorf("%w", errNoMapsFound)
 	}
 
 	return results, nil
 }
 
-// GetMapInfoCommand — Wails-команда для получения информации о карте
-func (md *MapDownloader) GetMapInfo() (MapInfo, error) {
+func extractMapID(downloadURL string) string {
+	matches := mapDownloadPathRegex.FindStringSubmatch(downloadURL)
+	if len(matches) < 2 {
+		return ""
+	}
+	return matches[1]
+}
+
+func findMapRecordContainer(downloadLink *goquery.Selection, mapID string) *goquery.Selection {
+	candidates := make([]*goquery.Selection, 0, 8)
+	current := downloadLink
+	for depth := 0; depth < 10; depth++ {
+		current = current.Parent()
+		if current.Length() == 0 {
+			break
+		}
+
+		switch goquery.NodeName(current) {
+		case "tr", "li", "article", "section", "div":
+			candidates = append(candidates, current)
+		}
+	}
+
+	if len(candidates) == 0 {
+		return downloadLink
+	}
+
+	for _, candidate := range candidates {
+		if findMapNameLink(candidate, mapID).Length() > 0 && dateRegex.FindString(candidate.Text()) != "" {
+			return candidate
+		}
+	}
+	for _, candidate := range candidates {
+		if findMapNameLink(candidate, mapID).Length() > 0 {
+			return candidate
+		}
+	}
+	for _, candidate := range candidates {
+		if dateRegex.FindString(candidate.Text()) != "" {
+			return candidate
+		}
+	}
+
+	return candidates[0]
+}
+
+func findMapNameLink(container *goquery.Selection, mapID string) *goquery.Selection {
+	selector := "a[href^='/maps/']"
+	if mapID != "" {
+		selector = fmt.Sprintf("a[href*='/maps/%s/']", mapID)
+	}
+
+	return container.Find(selector).FilterFunction(func(_ int, sel *goquery.Selection) bool {
+		href, _ := sel.Attr("href")
+		if strings.Contains(href, "/download/") {
+			return false
+		}
+		if strings.TrimSpace(sel.Text()) == "" {
+			return false
+		}
+		return sel.Find("img").Length() == 0
+	}).First()
+}
+
+func extractMapDate(record *goquery.Selection) string {
+	date := strings.TrimSpace(record.Find("td:nth-child(4)").First().Text())
+	if date != "" {
+		return date
+	}
+	return dateRegex.FindString(record.Text())
+}
+
+func extractVersion(name string) string {
+	matches := versionRegex.FindStringSubmatch(name)
+	if len(matches) == 0 {
+		return defaultMapVersion
+	}
+	return strings.ToLower(matches[0])
+}
+
+func parseMapSize(text string) int64 {
+	matches := sizeRegex.FindStringSubmatch(text)
+	if len(matches) < 3 {
+		return 0
+	}
+
+	value, err := strconv.ParseFloat(matches[1], 64)
+	if err != nil {
+		return 0
+	}
+
+	switch strings.ToUpper(matches[2]) {
+	case "B":
+		return int64(value)
+	case "KB":
+		return int64(value * 1024)
+	case "MB":
+		return int64(value * 1024 * 1024)
+	case "GB":
+		return int64(value * 1024 * 1024 * 1024)
+	default:
+		return 0
+	}
+}
+
+func normalizeDownloadURL(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", fmt.Errorf("empty download url")
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	base, _ := url.Parse(epicwarBaseURL)
+	if !u.IsAbs() {
+		u = base.ResolveReference(u)
+	}
+
+	if scheme := strings.ToLower(u.Scheme); scheme != "http" && scheme != "https" {
+		return "", fmt.Errorf("unsupported download scheme: %s", u.Scheme)
+	}
+
+	host := strings.ToLower(u.Hostname())
+	if host != "epicwar.com" && host != "www.epicwar.com" {
+		return "", fmt.Errorf("unexpected download host: %s", u.Host)
+	}
+
+	return u.String(), nil
+}
+
+// FetchMapInfo — Wails-команда для получения информации о карте
+func (md *MapDownloader) FetchMapInfo() (MapInfo, error) {
 	log.Println("Получение информации о карте...")
 
 	if err := md.initMapsDir(); err != nil {
 		return MapInfo{}, fmt.Errorf("MapDownloader не инициализирован: %w", err)
 	}
 
-	// Новый URL поиска
-	searchURL := "https://www.epicwar.com/maps/?sort=time&order=desc&a=Vordik"
-	resp, err := md.client.Get(searchURL)
+	var lastErr error
+	for attempt := 1; attempt <= fetchMapInfoAttempts; attempt++ {
+		mapInfo, err := md.fetchMapInfoOnce()
+		if err == nil {
+			return mapInfo, nil
+		}
+		lastErr = err
+
+		if attempt == fetchMapInfoAttempts || !shouldRetryFetchMapInfo(err) {
+			break
+		}
+
+		delay := retryDelay(attempt)
+		log.Printf("FetchMapInfo: ошибка попытки %d/%d: %v. Повтор через %s", attempt, fetchMapInfoAttempts, err, delay)
+		time.Sleep(delay)
+	}
+
+	return MapInfo{}, lastErr
+}
+
+func shouldRetryFetchMapInfo(err error) bool {
+	return errors.Is(err, errNoMapsFound) || isRetryableRequestError(err)
+}
+
+func (md *MapDownloader) fetchMapInfoOnce() (MapInfo, error) {
+	resp, err := md.getWithTimeout(epicwarSearchURL, fetchMapInfoTimeout)
 	if err != nil {
 		return MapInfo{}, fmt.Errorf("ошибка HTTP-запроса: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return MapInfo{}, fmt.Errorf("получен не-200 статус код: %d", resp.StatusCode)
+		return MapInfo{}, &httpStatusError{
+			StatusCode: resp.StatusCode,
+			Context:    "получен не-200 статус код",
+		}
 	}
 
 	htmlBytes, err := io.ReadAll(resp.Body)
@@ -183,15 +295,11 @@ func (md *MapDownloader) GetMapInfo() (MapInfo, error) {
 		return MapInfo{}, fmt.Errorf("ошибка парсинга информации о картах: %w", err)
 	}
 
-	// Берем первую карту, так как сортировка по времени уже есть в URL
+	// Search endpoint is sorted by latest map, use first entry.
 	foundMapInfo := mapInfos[0]
 
 	savePath := md.mapsDir
-	// Используем то же имя файла, что и в DownloadMap
-	fileName := foundMapInfo.Name
-	if !strings.HasSuffix(strings.ToLower(fileName), ".w3x") && !strings.HasSuffix(strings.ToLower(fileName), ".w3m") {
-		fileName += ".w3x"
-	}
+	fileName := mapFileName(foundMapInfo.Name)
 	filePath := filepath.Join(savePath, fileName)
 
 	isDownloaded := false
@@ -199,16 +307,10 @@ func (md *MapDownloader) GetMapInfo() (MapInfo, error) {
 		isDownloaded = true
 	}
 
-	// Ссылка теперь абсолютная, не нужно добавлять домен
-	downloadURL := foundMapInfo.DownloadLink
-	if !strings.HasPrefix(downloadURL, "http") {
-		downloadURL = "https://www.epicwar.com" + downloadURL
-	}
-
 	return MapInfo{
 		Name:         foundMapInfo.Name,
 		Version:      foundMapInfo.Version,
-		DownloadURL:  downloadURL,
+		DownloadURL:  foundMapInfo.DownloadLink,
 		Date:         foundMapInfo.Date,
 		Size:         foundMapInfo.Size,
 		SavePath:     savePath,

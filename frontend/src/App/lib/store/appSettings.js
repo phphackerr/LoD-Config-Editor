@@ -1,18 +1,14 @@
-//@ts-nocheck
-
-import { writable, get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import {
-  GetSettings,
-  UpdateSettings,
+  GetDefaultSettings,
   GetOption,
-  GetDefaultSettings
+  GetSettings,
+  UpdateSettings
 } from '/bindings/lce/backend/app_settings/appsettings';
-
 import { CheckAndFindPaths } from '/bindings/lce/backend/paths_scanner/scanner';
+import { samePath, toLocalizedError, uniquePaths } from './storeUtils';
 
-// --- Store и базовые методы --- //
-
-export const appSettings = writable({
+export const DEFAULT_APP_SETTINGS = {
   width: 1600,
   height: 900,
   language: 'en',
@@ -20,138 +16,309 @@ export const appSettings = writable({
   first_run: true,
   all_paths: [],
   theme: 'default',
-  show_extra_hotkeys: false
-});
+  windowed_mode: false
+};
 
-export async function loadSettings() {
+export const appSettings = writable({ ...DEFAULT_APP_SETTINGS });
+export const initialAppSettingsState = {
+  loading: false,
+  success: false,
+  error: null,
+  operation: '',
+  lastResult: null
+};
+export const appSettingsState = writable({ ...initialAppSettingsState });
+
+const APP_SETTINGS_OP_LOAD = 'appSettings:load';
+const APP_SETTINGS_OP_UPDATE = 'appSettings:update';
+const APP_SETTINGS_OP_RESET = 'appSettings:reset';
+const APP_SETTINGS_OP_GET_OPTION = 'appSettings:get-option';
+const APP_SETTINGS_OP_RUN_SCANNER = 'appSettings:run-scanner';
+const APP_SETTINGS_OP_DELETE_PATH = 'appSettings:delete-path';
+
+let operationSeq = 0;
+
+function normalizeSettings(input) {
+  const base = { ...DEFAULT_APP_SETTINGS, ...(input || {}) };
+  base.all_paths = uniquePaths(base.all_paths);
+  return base;
+}
+
+function setAppSettings(next) {
+  appSettings.set(normalizeSettings(next));
+}
+
+function patchAppSettingsState(patch) {
+  appSettingsState.update((state) => ({ ...state, ...patch }));
+}
+
+function createAppSettingsResult(operation, { ok, data = null, error = null, rolledBack = false }) {
+  return {
+    ok: Boolean(ok),
+    operation,
+    data,
+    error: error ? String(error) : null,
+    rolledBack: Boolean(rolledBack)
+  };
+}
+
+function startAppSettingsOperation(operation) {
+  operationSeq += 1;
+  const token = operationSeq;
+  patchAppSettingsState({
+    loading: true,
+    success: false,
+    error: null,
+    operation
+  });
+  return token;
+}
+
+function finishAppSettingsOperation(token, result) {
+  if (token !== operationSeq) {
+    return result;
+  }
+
+  patchAppSettingsState({
+    loading: false,
+    success: result.ok,
+    error: result.error,
+    operation: result.operation,
+    lastResult: result
+  });
+  return result;
+}
+
+async function loadDefaultSettingsNoState() {
   try {
-    const settings = await GetSettings();
-    appSettings.set(settings);
-    console.log('Настройки загружены:', settings);
-    return settings;
-  } catch (error) {
-    console.error('Ошибка загрузки настроек:', error);
-    // Пытаемся получить дефолтные настройки с бэкенда
-    try {
-      const defaultSettings = await GetDefaultSettings();
-      appSettings.set(defaultSettings);
-      return defaultSettings;
-    } catch (e) {
-      console.error('Critical: Failed to load even default settings', e);
-      return {}; // Fallback to empty object if everything fails
-    }
+    return normalizeSettings(await GetDefaultSettings());
+  } catch {
+    return { ...DEFAULT_APP_SETTINGS };
   }
 }
 
-export async function updateSettings(newSettings) {
+async function persistSettings(next) {
+  const updated = normalizeSettings(await UpdateSettings(next));
+  setAppSettings(updated);
+  return updated;
+}
+
+export async function loadSettings() {
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_LOAD);
+
   try {
-    // Сначала обновляем стор оптимистично (или берем текущее состояние)
-    const current = get(appSettings);
-    const fullSettings = { ...current, ...newSettings };
-
-    appSettings.set(fullSettings);
-
-    // Отправляем ПОЛНЫЙ объект настроек на бэкенд
-    const updatedSettings = await UpdateSettings(fullSettings);
-
-    // Обновляем стор ответом от бэкенда (на случай если там что-то изменилось/валидировалось)
-    appSettings.set(updatedSettings);
-    console.log('Настройки обновлены:', updatedSettings);
-    return updatedSettings;
+    const settings = await GetSettings();
+    setAppSettings(settings);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_LOAD, {
+        ok: true,
+        data: get(appSettings)
+      })
+    );
   } catch (error) {
-    console.error('Ошибка обновления настроек:', error);
-    await loadSettings(); // Откат к сохраненным настройкам
-    throw error;
+    const fallback = await loadDefaultSettingsNoState();
+    setAppSettings(fallback);
+    const message = toLocalizedError(error, 'ERRORS.app_settings.load');
+
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_LOAD, {
+        ok: false,
+        data: get(appSettings),
+        error: message,
+        rolledBack: true
+      })
+    );
+  }
+}
+
+export async function updateSettings(patch) {
+  const current = get(appSettings);
+  const next = normalizeSettings({ ...current, ...(patch || {}) });
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_UPDATE);
+
+  try {
+    const updated = await persistSettings(next);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_UPDATE, {
+        ok: true,
+        data: updated
+      })
+    );
+  } catch (error) {
+    setAppSettings(current);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_UPDATE, {
+        ok: false,
+        data: current,
+        error: toLocalizedError(error, 'ERRORS.app_settings.update'),
+        rolledBack: true
+      })
+    );
   }
 }
 
 export async function getSetting(key) {
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_GET_OPTION);
+
   try {
-    return await GetOption(key);
+    const value = await GetOption(key);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_GET_OPTION, {
+        ok: true,
+        data: value
+      })
+    );
   } catch (error) {
-    console.error(`Ошибка получения настройки ${key}:`, error);
-    return null;
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_GET_OPTION, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.app_settings.get_setting')
+      })
+    );
   }
 }
 
 export async function resetSettings() {
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_RESET);
+
   try {
-    const defaultSettings = await GetDefaultSettings();
-    const updatedSettings = await UpdateSettings(defaultSettings);
-    appSettings.set(updatedSettings);
-    console.log('Настройки сброшены к значениям по умолчанию');
-    return updatedSettings;
+    const defaults = await loadDefaultSettingsNoState();
+    const updated = await persistSettings(defaults);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_RESET, {
+        ok: true,
+        data: updated
+      })
+    );
   } catch (error) {
-    console.error('Ошибка сброса настроек:', error);
-    throw error;
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_RESET, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.app_settings.reset')
+      })
+    );
   }
 }
-
-// --- Хелперы для настроек --- //
 
 export async function updateWindowSize(width, height) {
   return updateSettings({ width, height });
 }
 
 export async function updateLanguage(language) {
-  console.log(`Язык изменен на: ${language}`);
   return updateSettings({ language });
 }
 
 export async function updateGamePath(game_path) {
-  console.log(`Путь к игре изменен на: ${game_path}`);
   return updateSettings({ game_path });
 }
 
 export async function updateFirstRun(first_run) {
-  console.log(`First run установлен в: ${first_run}`);
   return updateSettings({ first_run });
 }
 
 export async function updateAllPaths(all_paths) {
-  console.log(`Все пути обновлены на: ${all_paths}`);
-  return updateSettings({ all_paths });
+  return updateSettings({ all_paths: uniquePaths(all_paths) });
 }
 
 export async function updateTheme(theme) {
-  console.log(`Тема изменена на: ${theme}`);
   return updateSettings({ theme });
 }
 
-// --- Управление путями (NEW) --- //
+export async function updateWindowedMode(windowed_mode) {
+  return updateSettings({ windowed_mode });
+}
 
-// Сканирование системы на предмет путей
 export async function runScanner() {
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_RUN_SCANNER);
+
   try {
-    const pathsFound = await CheckAndFindPaths();
-    console.log('Найденные пути:', pathsFound);
+    const found = uniquePaths(await CheckAndFindPaths());
+    const current = get(appSettings);
 
-    await updateAllPaths(pathsFound);
+    const patch = {
+      all_paths: found,
+      first_run: false
+    };
 
-    if (pathsFound.length === 1) {
-      await updateGamePath(pathsFound[0]);
+    if (found.length === 1) {
+      patch.game_path = found[0];
+    } else if (current.game_path && !found.some((p) => samePath(p, current.game_path))) {
+      patch.game_path = '';
     }
 
-    const isFirstRun = get(appSettings).first_run;
-    if (isFirstRun) {
-      await updateFirstRun(false);
-    }
-
-    return pathsFound;
+    const desired = normalizeSettings({ ...current, ...patch });
+    const updated = await persistSettings(desired);
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_RUN_SCANNER, {
+        ok: true,
+        data: {
+          found,
+          settings: updated
+        }
+      })
+    );
   } catch (error) {
-    console.error('Ошибка при сканировании путей:', error);
-    return [];
+    const message = toLocalizedError(error, 'ERRORS.app_settings.run_scanner');
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_RUN_SCANNER, {
+        ok: false,
+        data: {
+          found: []
+        },
+        error: message
+      })
+    );
   }
 }
 
-// Удаление конкретного пути
 export async function deletePath(pathToDelete) {
+  const token = startAppSettingsOperation(APP_SETTINGS_OP_DELETE_PATH);
   const current = get(appSettings);
-  const updatedPaths = current.all_paths.filter((p) => p !== pathToDelete);
+  const updatedPaths = current.all_paths.filter((p) => !samePath(p, pathToDelete));
+  const patch = { all_paths: updatedPaths };
 
-  await updateAllPaths(updatedPaths);
+  if (samePath(current.game_path, pathToDelete)) {
+    patch.game_path = updatedPaths[0] || '';
+  }
 
-  if (pathToDelete === current.game_path) {
-    await updateGamePath(updatedPaths[0] || '');
+  try {
+    const desired = normalizeSettings({ ...current, ...patch });
+    const updated = await persistSettings(desired);
+
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_DELETE_PATH, {
+        ok: true,
+        data: {
+          deletedPath: pathToDelete,
+          settings: updated
+        }
+      })
+    );
+  } catch (error) {
+    setAppSettings(current);
+
+    return finishAppSettingsOperation(
+      token,
+      createAppSettingsResult(APP_SETTINGS_OP_DELETE_PATH, {
+        ok: false,
+        data: {
+          deletedPath: pathToDelete,
+          settings: current
+        },
+        error: toLocalizedError(error, 'ERRORS.app_settings.delete_path'),
+        rolledBack: true
+      })
+    );
   }
 }

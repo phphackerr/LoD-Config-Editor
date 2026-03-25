@@ -1,8 +1,10 @@
 package config_editor
 
 import (
+	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"gopkg.in/ini.v1"
 )
@@ -13,117 +15,79 @@ type GameConfig struct {
 	keyMap map[string]map[string]string // section -> key -> originalKey
 }
 
+var iniGlobalsMu sync.Mutex
+
 // Загрузка INI с сохранением структуры и комментариев
 func (c *GameConfig) Load(path string) error {
-	// Устанавливаем имя дефолтной секции в пустую строку ПЕРЕД загрузкой,
-	// чтобы ключи без секции попадали в секцию "" (а не "DEFAULT").
-	// При сохранении, если имя секции совпадает с DefaultSection, заголовок не пишется.
-	ini.DefaultSection = ""
-
-	cfg, err := ini.LoadSources(ini.LoadOptions{
-		PreserveSurroundedQuote:  true, // не трогать кавычки, если появятся
-		SpaceBeforeInlineComment: true, // сохранить inline-комментарии
-		AllowBooleanKeys:         true,
-		// Insensitive:              true, // Мы реализуем свою нечувствительность
-	}, path)
+	cfg, err := loadINI(path)
 	if err != nil {
+		c.file = nil
+		c.path = ""
+		c.keyMap = nil
 		return err
 	}
 	c.file = cfg
 	c.path = path
-	c.keyMap = make(map[string]map[string]string)
-
-	// Строим карту ключей
-	for _, section := range cfg.Sections() {
-		secNameLower := strings.ToLower(section.Name())
-		c.keyMap[secNameLower] = make(map[string]string)
-		for _, key := range section.Keys() {
-			c.keyMap[secNameLower][strings.ToLower(key.Name())] = key.Name()
-		}
-	}
+	c.rebuildKeyMap()
 
 	return nil
 }
 
 // Получить значение
-func (c *GameConfig) Get(section, key string) string {
+func (c *GameConfig) Get(section, key string) (string, error) {
 	if c.file == nil {
-		return ""
+		return "", ErrConfigNotLoaded
+	}
+
+	sec, secName, err := c.resolveSection(section)
+	if err != nil {
+		return "", fmt.Errorf("%w: %s", ErrSectionNotFound, section)
 	}
 
 	// 1. Пытаемся найти точное совпадение
-	sec, err := c.file.GetSection(section)
-	if err == nil && sec.HasKey(key) {
-		return sec.Key(key).String()
+	if sec.HasKey(key) {
+		return sec.Key(key).String(), nil
 	}
 
 	// 2. Если не нашли, ищем через карту (case-insensitive)
-	secNameLower := strings.ToLower(section)
+	secNameLower := strings.ToLower(secName)
 	keyLower := strings.ToLower(key)
 
-	// Ищем реальное имя секции
-	var realSectionName string
-	
-	// Сначала проверяем, может секция с таким именем есть (но ключ не нашли выше)
-	if s, err := c.file.GetSection(section); err == nil {
-		realSectionName = s.Name()
-	} else {
-		// Если нет, ищем перебором (так как keyMap хранит только lower case ключи секций)
-		for _, s := range c.file.Sections() {
-			if strings.EqualFold(s.Name(), section) {
-				realSectionName = s.Name()
-				break
-			}
-		}
-	}
-
-	if realSectionName == "" {
-		return "not found section"
-	}
-
-	// Теперь ищем ключ в этой секции
-	sec, _ = c.file.GetSection(realSectionName)
-	
-	// Проверяем маппинг ключа
 	if mapping, ok := c.keyMap[secNameLower]; ok {
-		if realKey, ok := mapping[keyLower]; ok {
-			return sec.Key(realKey).String()
+		if realKey, exists := mapping[keyLower]; exists && sec.HasKey(realKey) {
+			return sec.Key(realKey).String(), nil
 		}
 	}
-	
-	// Если в мапе нет, но вдруг он есть в файле (добавили динамически?)
-	if sec.HasKey(key) {
-		return sec.Key(key).String()
+
+	// Если в мапе нет, но вдруг ключ есть в секции с другим регистром.
+	for _, k := range sec.Keys() {
+		if strings.EqualFold(k.Name(), key) {
+			return k.String(), nil
+		}
 	}
 
-	return "not found key"
+	return "", fmt.Errorf("%w: [%s] %s", ErrKeyNotFound, secName, key)
 }
 
 // Обновить значение
-func (c *GameConfig) Set(section, key, value string) {
+func (c *GameConfig) Set(section, key, value string) error {
 	if c.file == nil {
-		return
+		return ErrConfigNotLoaded
 	}
 
 	secNameLower := strings.ToLower(section)
 	keyLower := strings.ToLower(key)
 
 	// 1. Определяем реальное имя секции
-	var realSection *ini.Section
-	if s, err := c.file.GetSection(section); err == nil {
-		realSection = s
-	} else {
-		for _, s := range c.file.Sections() {
-			if strings.EqualFold(s.Name(), section) {
-				realSection = s
-				break
-			}
-		}
-	}
+	realSection, _, _ := c.resolveSection(section)
 
 	// Если секции нет - создаем (с тем именем, которое передали)
 	if realSection == nil {
-		realSection, _ = c.file.NewSection(section)
+		var err error
+		realSection, err = c.file.NewSection(section)
+		if err != nil {
+			return fmt.Errorf("failed to create section %s: %w", section, err)
+		}
 		// Обновляем мапу
 		if c.keyMap == nil {
 			c.keyMap = make(map[string]map[string]string)
@@ -133,7 +97,7 @@ func (c *GameConfig) Set(section, key, value string) {
 
 	// 2. Определяем реальное имя ключа
 	realKeyName := key // По умолчанию - как передали
-	
+
 	if mapping, ok := c.keyMap[secNameLower]; ok {
 		if existingKey, ok := mapping[keyLower]; ok {
 			realKeyName = existingKey
@@ -148,22 +112,87 @@ func (c *GameConfig) Set(section, key, value string) {
 		c.keyMap[secNameLower] = make(map[string]string)
 	}
 	c.keyMap[secNameLower][keyLower] = realKeyName
+
+	return nil
 }
 
 // Сохранить обратно в файл
 func (c *GameConfig) Save() error {
 	if c.file == nil || c.path == "" {
-		log.Println("⚠ Save skipped: file or path is nil")
-		return nil
+		return ErrConfigNotLoaded
 	}
 	log.Println("💾 Saving INI to:", c.path)
 
-	ini.PrettyFormat = true // Выравнивание знака '='
-	ini.PrettyEqual = false // Пробелы вокруг '='
+	return saveINI(c.file, c.path)
+}
 
-	return c.file.SaveTo(c.path)
+func (c *GameConfig) resolveSection(section string) (*ini.Section, string, error) {
+	if s, err := c.file.GetSection(section); err == nil {
+		return s, s.Name(), nil
+	}
+
+	for _, s := range c.file.Sections() {
+		if strings.EqualFold(s.Name(), section) {
+			return s, s.Name(), nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("%w: %s", ErrSectionNotFound, section)
+}
+
+func loadINI(path string) (*ini.File, error) {
+	iniGlobalsMu.Lock()
+	defer iniGlobalsMu.Unlock()
+
+	origDefaultSection := ini.DefaultSection
+	ini.DefaultSection = ""
+	defer func() {
+		ini.DefaultSection = origDefaultSection
+	}()
+
+	return ini.LoadSources(ini.LoadOptions{
+		PreserveSurroundedQuote:  true,
+		SpaceBeforeInlineComment: true,
+		AllowBooleanKeys:         true,
+	}, path)
+}
+
+func saveINI(file *ini.File, path string) error {
+	iniGlobalsMu.Lock()
+	defer iniGlobalsMu.Unlock()
+
+	origDefaultSection := ini.DefaultSection
+	origPrettyFormat := ini.PrettyFormat
+	origPrettyEqual := ini.PrettyEqual
+
+	ini.DefaultSection = ""
+	ini.PrettyFormat = true
+	ini.PrettyEqual = false
+
+	defer func() {
+		ini.DefaultSection = origDefaultSection
+		ini.PrettyFormat = origPrettyFormat
+		ini.PrettyEqual = origPrettyEqual
+	}()
+
+	return file.SaveTo(path)
 }
 
 func (c *GameConfig) Path() string {
 	return c.path
+}
+
+func (c *GameConfig) rebuildKeyMap() {
+	c.keyMap = make(map[string]map[string]string)
+	if c.file == nil {
+		return
+	}
+
+	for _, section := range c.file.Sections() {
+		secNameLower := strings.ToLower(section.Name())
+		c.keyMap[secNameLower] = make(map[string]string)
+		for _, key := range section.Keys() {
+			c.keyMap[secNameLower][strings.ToLower(key.Name())] = key.Name()
+		}
+	}
 }

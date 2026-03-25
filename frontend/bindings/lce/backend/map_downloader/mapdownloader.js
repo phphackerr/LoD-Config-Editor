@@ -27,6 +27,16 @@ export function DownloadMap(mapInfo) {
 }
 
 /**
+ * FetchMapInfo — Wails-команда для получения информации о карте
+ * @returns {$CancellablePromise<$models.MapInfo>}
+ */
+export function FetchMapInfo() {
+    return $Call.ByID(2654536466).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * GetChangelogCommand — Wails-команда для получения списка изменений
  * @param {string} version
  * @returns {$CancellablePromise<string>}
@@ -36,13 +46,27 @@ export function GetChangelog(version) {
 }
 
 /**
- * GetMapInfoCommand — Wails-команда для получения информации о карте
- * @returns {$CancellablePromise<$models.MapInfo>}
+ * PauseDownload приостанавливает текущую загрузку карты.
+ * @returns {$CancellablePromise<void>}
  */
-export function GetMapInfo() {
-    return $Call.ByID(192268846).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType1($result);
-    }));
+export function PauseDownload() {
+    return $Call.ByID(1639176110);
+}
+
+/**
+ * ResumeDownload возобновляет ранее приостановленную загрузку карты.
+ * @returns {$CancellablePromise<void>}
+ */
+export function ResumeDownload() {
+    return $Call.ByID(1411694971);
+}
+
+/**
+ * StopDownload полностью останавливает текущую загрузку карты.
+ * @returns {$CancellablePromise<void>}
+ */
+export function StopDownload() {
+    return $Call.ByID(1551879372);
 }
 
 // Private type creation functions

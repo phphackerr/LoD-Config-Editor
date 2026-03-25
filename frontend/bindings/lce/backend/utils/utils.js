@@ -62,6 +62,20 @@ export function OpenFolderInExplorer(path) {
 }
 
 /**
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenLocalesFolder() {
+    return $Call.ByID(2750292752);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenThemesFolder() {
+    return $Call.ByID(3572163439);
+}
+
+/**
  * @param {string} url
  * @returns {$CancellablePromise<void>}
  */

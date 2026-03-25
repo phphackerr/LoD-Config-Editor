@@ -1,9 +1,9 @@
 <script>
-  // @ts-nocheck
-  import { onMount } from 'svelte';
   import HotkeyCaptureModal from './HotkeyCaptureModal.svelte';
-  import { getConfigValue, isConfigAvailable } from '../../../lib/store/config';
+  import { getConfigValue } from '../../../lib/store/config';
+  import { notifyError } from '../../../lib/store/notifications';
   import { normalizeKey } from './keyFuncs';
+  import { toErrorMessage } from '../../../lib/store/storeUtils';
   import { t } from 'svelte-i18n';
   import Base from '../Base.svelte';
 
@@ -29,8 +29,13 @@
       return;
     }
 
-    const savedValue = await getConfigValue(section, option);
-    hotkeyValue = normalizeKey(savedValue);
+    try {
+      const savedValue = await getConfigValue(section, option);
+      hotkeyValue = normalizeKey(savedValue);
+    } catch (error) {
+      hotkeyValue = '';
+      notifyError(toErrorMessage(error, $t('ERRORS.hotkeys.load_value')));
+    }
   }
 
   function openModal(configAvailable) {
@@ -136,7 +141,7 @@
       -1px -1px 0 #000,
       1px -1px 0 #000,
       -1px 1px 0 #000,
-      0 0 4px rgba(0, 0, 0, 0.8);
+      0 0 4px var(--hotkeys-hotkey-text-shadow-color, rgba(0, 0, 0, 0.8));
     font-size: 12px;
     font-weight: 600;
     text-align: center;

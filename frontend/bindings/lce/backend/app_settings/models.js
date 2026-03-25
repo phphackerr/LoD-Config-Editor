@@ -7,7 +7,7 @@
 import { Create as $Create } from "@wailsio/runtime";
 
 /**
- * Settings - структура для хранения настроек приложения
+ * Settings stores application settings.
  */
 export class Settings {
     /**
@@ -45,7 +45,6 @@ export class Settings {
         }
         if (!("first_run" in $$source)) {
             /**
-             * NEW: Добавляем поле FirstRun
              * @member
              * @type {boolean}
              */
@@ -53,7 +52,6 @@ export class Settings {
         }
         if (!("all_paths" in $$source)) {
             /**
-             * NEW: Добавляем поле AllPaths
              * @member
              * @type {string[]}
              */
@@ -61,11 +59,17 @@ export class Settings {
         }
         if (!("theme" in $$source)) {
             /**
-             * NEW: Добавляем поле Theme
              * @member
              * @type {string}
              */
             this["theme"] = "";
+        }
+        if (!("windowed_mode" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["windowed_mode"] = false;
         }
 
         Object.assign(this, $$source);

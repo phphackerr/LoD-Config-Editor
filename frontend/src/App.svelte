@@ -6,11 +6,18 @@
   import Actions from './App/footer/Actions.svelte';
   import ConfigNotification from './App/ConfigNotification.svelte';
   import UpdaterNotification from './App/UpdaterNotification.svelte';
+  import Notifications from './App/Notifications.svelte';
   import { onMount } from 'svelte';
   import { appSettings } from './App/lib/store/appSettings';
   import { openSettings, isSettingsOpen } from './App/lib/store/settingsModal';
 
   import { OpenDevTools } from '/bindings/lce/backend/utils/utils';
+
+  import ThemeEditor from './App/settings/tabsS/components/ThemeEditor/Editor.svelte';
+  import LanguageEditor from './App/settings/tabsS/components/LanguageEditor/Editor.svelte';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const windowType = urlParams.get('window') || 'main'; // 'main' по умолчанию
 
   onMount(() => {
     const handleKeydown = (e) => {
@@ -21,41 +28,54 @@
 
     window.addEventListener('keydown', handleKeydown);
 
-    const unsubscribe = appSettings.subscribe((settings) => {
-      if (settings.first_run) {
-        openSettings('Paths');
-      }
-    });
+    let unsubscribe;
+    if (windowType === 'main') {
+      unsubscribe = appSettings.subscribe((settings) => {
+        if (settings.first_run) {
+          openSettings('Paths');
+        }
+      });
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeydown);
-      unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   });
 </script>
 
-<div class="main">
-  <TitleBar />
-  <div class="tabs">
-    <Tabs />
+{#if windowType === 'themeEditor'}
+  <ThemeEditor />
+  <Notifications />
+{:else if windowType === 'languageEditor'}
+  <LanguageEditor />
+  <Notifications />
+{:else}
+  <div class="main">
+    <TitleBar />
+    <div class="tabs">
+      <Tabs />
+    </div>
+    <div class="footer">
+      <Watcher />
+      <Actions />
+    </div>
+    <SettingsModal bind:isOpen={$isSettingsOpen} />
+    <ConfigNotification />
+    <UpdaterNotification />
+    <Notifications />
   </div>
-  <div class="footer">
-    <Watcher />
-    <Actions />
-  </div>
-  <SettingsModal bind:isOpen={$isSettingsOpen} />
-  <ConfigNotification />
-  <UpdaterNotification />
-</div>
+{/if}
 
 <style>
   .main {
     height: 100%;
-    background: var(--background-color);
-    color: var(--text-color);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    background: var(--app-bg, rgb(47, 47, 47));
+    color: var(--app-text, rgb(246, 246, 246));
   }
 
   .tabs {

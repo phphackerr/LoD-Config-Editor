@@ -1,8 +1,7 @@
 <script>
-  // @ts-nocheck
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { activeTab } from './lib/store/search';
+  import { activeTab, setActiveTab } from './lib/store/search';
 
   // Импортируем все компоненты из папки tabs
   const tabs = import.meta.glob('./tabs/*.svelte', { eager: true });
@@ -26,10 +25,9 @@
       .sort((a, b) => a.order - b.order);
 
     if (tabComponents.length > 0) {
-      activeTab.set(tabComponents[0].id);
+      setActiveTab(tabComponents[0].id);
     } else {
-      activeTab.set('');
-      console.warn('No tab components found!');
+      setActiveTab('');
     }
   }
 
@@ -38,11 +36,32 @@
   });
 
   function openTab(tabId) {
-    activeTab.set(tabId);
+    setActiveTab(tabId);
+  }
+
+  function handleWheel(event) {
+    // Prevent default scrolling
+    event.preventDefault();
+
+    const currentIndex = tabComponents.findIndex((tab) => tab.id === $activeTab);
+    if (currentIndex === -1) return;
+
+    let newIndex = currentIndex;
+    if (event.deltaY > 0) {
+      // Scroll down -> Next tab (cyclic)
+      newIndex = (currentIndex + 1) % tabComponents.length;
+    } else if (event.deltaY < 0) {
+      // Scroll up -> Previous tab (cyclic)
+      newIndex = (currentIndex - 1 + tabComponents.length) % tabComponents.length;
+    }
+
+    if (newIndex !== currentIndex) {
+      setActiveTab(tabComponents[newIndex].id);
+    }
   }
 </script>
 
-<div class="tab-bar">
+<div class="tab-bar" on:wheel|nonpassive={handleWheel}>
   {#each tabComponents as { id, icon } (id)}
     <button class="tab-btn" class:active={$activeTab === id} on:click={() => openTab(id)}>
       {#if icon}
@@ -94,12 +113,12 @@
 
   .tab-btn.active {
     background: var(--tab-active-background, #181c20);
-    color: var(--tab-active-color, #3ba475);
-    border-bottom: 3px solid #3ba475;
+    color: var(--primary-color, #3ba475);
+    border-bottom: 3px solid var(--primary-color, #3ba475);
   }
 
   .tab-btn.active:focus-visible {
-    border-bottom: 3px solid #3ba475;
+    border-bottom: 3px solid var(--primary-color, #3ba475);
   }
 
   .tab-icon {

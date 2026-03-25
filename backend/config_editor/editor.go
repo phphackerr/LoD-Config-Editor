@@ -1,6 +1,8 @@
 package config_editor
 
 import (
+	"errors"
+	"log"
 	"strings"
 	"sync"
 )
@@ -34,6 +36,7 @@ func (e *ConfigEditor) LoadConfig(configPath string) (map[string]map[string]stri
 	defer e.mu.Unlock()
 
 	if err := e.config.Load(configPath); err != nil {
+		e.config = &GameConfig{}
 		return nil, err
 	}
 	return e.config.ToMap(), nil
@@ -46,21 +49,36 @@ func (e *ConfigEditor) IsConfigAvailable() bool {
 	return e.config != nil && e.config.file != nil
 }
 
-// Получить значение
-func (e *ConfigEditor) GetConfigValue(section, option string) string {
+// GetConfigValueStrict returns config value with strict error semantics.
+func (e *ConfigEditor) GetConfigValueStrict(section, option string) (string, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if e.config == nil || e.config.file == nil {
-		return "config not loaded"
+	if e.config == nil {
+		return "", ErrConfigNotLoaded
 	}
+
 	return e.config.Get(section, option)
+}
+
+// Получить значение
+func (e *ConfigEditor) GetConfigValue(section, option string) string {
+	value, err := e.GetConfigValueStrict(section, option)
+	if err != nil {
+		if !errors.Is(err, ErrSectionNotFound) && !errors.Is(err, ErrKeyNotFound) {
+			log.Printf("GetConfigValue error for [%s] %s: %v", section, option, err)
+		}
+		return ""
+	}
+	return value
 }
 
 // Установить значение
 func (e *ConfigEditor) SetConfigValue(section, option, value string) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.config.Set(section, option, value)
+	if err := e.config.Set(section, option, value); err != nil {
+		return err
+	}
 	return e.config.Save()
 }
 
@@ -69,7 +87,18 @@ func (e *ConfigEditor) GetHotkeyValue(section, option string) (string, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	rawValue := e.config.Get(section, option)
+	if e.config == nil || e.config.file == nil {
+		return "", ErrConfigNotLoaded
+	}
+
+	rawValue, err := e.config.Get(section, option)
+	if err != nil {
+		if errors.Is(err, ErrSectionNotFound) || errors.Is(err, ErrKeyNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+
 	if rawValue == "" {
 		return "", nil
 	}

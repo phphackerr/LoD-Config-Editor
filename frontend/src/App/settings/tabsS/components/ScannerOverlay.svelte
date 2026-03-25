@@ -1,6 +1,6 @@
 <script>
   export let show = false;
-  export let text = "Загрузка..."; // Текст по умолчанию, можно переопределить
+  export let text = 'Загрузка...'; // Текст по умолчанию, можно переопределить
 </script>
 
 {#if show}
@@ -41,12 +41,11 @@
   }
   .eyes:before,
   .eyes:after {
-    content: "";
+    content: '';
     height: 20px;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: radial-gradient(farthest-side, #000 95%, #0000) 35% 35%/6px 6px
-      no-repeat #fff;
+    background: radial-gradient(farthest-side, #000 95%, #0000) 35% 35%/6px 6px no-repeat #fff;
     animation: l5 3s infinite;
   }
   @keyframes l5 {

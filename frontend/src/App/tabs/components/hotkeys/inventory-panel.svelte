@@ -71,8 +71,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: rgba(30, 30, 30, 0.5);
-    border: 1px solid transparent;
+    background-color: var(--hotkeys-panel-bg, rgba(30, 30, 30, 0.5));
+    border: 1px solid var(--hotkeys-panel-border, transparent);
     border-radius: 10px;
     box-sizing: border-box;
   }

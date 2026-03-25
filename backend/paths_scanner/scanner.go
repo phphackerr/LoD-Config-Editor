@@ -1,96 +1,212 @@
+//go:build windows
+
 package paths_scanner
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
-	// Этот импорт все еще нужен для `LoadSettings` и `SaveSettings` в других функциях, но не в CheckAndFindPaths.
-	"golang.org/x/sys/windows/registry" // Для доступа к реестру Windows
+	"golang.org/x/sys/windows/registry"
 )
 
-// Scanner - это структура, которая будет привязана к фронтенду Wails.
-// Она содержит методы для поиска путей к файлам игры.
-type Scanner struct{}
+const (
+	defaultMaxDepth       = 5
+	defaultScanTimeout    = 45 * time.Second
+	defaultScanWorkers    = 4
+	defaultMaxMatchesRoot = 10
+)
 
-// NewScanner создает новый экземпляр Scanner.
+var (
+	errMaxMatchesReached = errors.New("max matches per root reached")
+)
+
+type Scanner struct {
+	maxDepth          int
+	timeout           time.Duration
+	workerCount       int
+	maxMatchesPerRoot int
+	excludedFolders   map[string]struct{}
+}
+
 func NewScanner() *Scanner {
-	return &Scanner{}
+	return &Scanner{
+		maxDepth:          defaultMaxDepth,
+		timeout:           defaultScanTimeout,
+		workerCount:       defaultScanWorkers,
+		maxMatchesPerRoot: defaultMaxMatchesRoot,
+		excludedFolders: map[string]struct{}{
+			"windows":                   {},
+			"users":                     {},
+			"programdata":               {},
+			"system volume information": {},
+		},
+	}
 }
 
-// isTargetFile проверяет, является ли файл целевым (config.lod.ini или war3.exe).
 func isTargetFile(filename string) bool {
-	lowerFilename := strings.ToLower(filename)
-	return lowerFilename == "config.lod.ini" || lowerFilename == "war3.exe"
+	lower := strings.ToLower(filename)
+	return lower == "config.lod.ini" || lower == "war3.exe"
 }
 
-// findFilesInFolder ищет целевые файлы в указанной папке с заданной глубиной.
-// Возвращает путь к папке, содержащей целевой файл, и булево значение, указывающее, найден ли он.
-func findFilesInFolder(root string, excludedFolders []string, maxDepth int) (string, bool) {
-	root = filepath.Clean(root) // Очищаем корневой путь
-	rootInfo, err := os.Stat(root)
-	if err != nil || !rootInfo.IsDir() {
-		return "", false
+func (s *Scanner) FindConfigOrExeParallel() []string {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.findConfigOrExeWithContext(ctx)
+}
+
+func (s *Scanner) findConfigOrExeWithContext(ctx context.Context) []string {
+	drives := getLogicalDrives()
+	if len(drives) == 0 {
+		return []string{}
 	}
 
-	foundPath := ""
-	found := false
+	workers := s.workerCount
+	if workers <= 0 {
+		workers = defaultScanWorkers
+	}
+	if workers > len(drives) {
+		workers = len(drives)
+	}
 
-	err = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			// Логируем ошибку, но продолжаем обход
-			log.Printf("Ошибка доступа к пути %s: %v", path, err)
+	jobs := make(chan string)
+	results := make(chan []string, len(drives))
+
+	var wg sync.WaitGroup
+	worker := func() {
+		defer wg.Done()
+		for drive := range jobs {
+			matches, err := s.findInstallPathsInRoot(ctx, drive)
+			if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+				log.Printf("paths_scanner: failed scanning %s: %v", drive, err)
+			}
+			if len(matches) > 0 {
+				results <- matches
+			}
+		}
+	}
+
+	wg.Add(workers)
+	for i := 0; i < workers; i++ {
+		go worker()
+	}
+
+	go func() {
+		defer close(jobs)
+		for _, drive := range drives {
+			select {
+			case <-ctx.Done():
+				return
+			case jobs <- drive:
+			}
+		}
+	}()
+
+	wg.Wait()
+	close(results)
+
+	collected := make([]string, 0, len(drives))
+	for matched := range results {
+		collected = append(collected, matched...)
+	}
+
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		log.Printf("paths_scanner: scan timed out after %s, returning partial results", s.timeout)
+	}
+
+	return uniqueSortedPaths(collected)
+}
+
+func (s *Scanner) findInstallPathsInRoot(ctx context.Context, root string) ([]string, error) {
+	root = filepath.Clean(root)
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		return nil, nil
+	}
+
+	maxDepth := s.maxDepth
+	if maxDepth <= 0 {
+		maxDepth = defaultMaxDepth
+	}
+
+	maxMatches := s.maxMatchesPerRoot
+	if maxMatches <= 0 {
+		maxMatches = defaultMaxMatchesRoot
+	}
+
+	var found []string
+	foundSet := make(map[string]struct{}, 4)
+
+	walkErr := filepath.WalkDir(root, func(path string, d os.DirEntry, walkErr error) error {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if walkErr != nil {
+			if d != nil && d.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
-		// Вычисляем текущую глубину относительно корневого каталога
-		depthFromRoot := 0
-		if path != root {
-			// Количество разделителей пути в части после корня
-			depthFromRoot = strings.Count(path[len(root):], string(os.PathSeparator))
-			if d.IsDir() {
-				// Если это директория и она не является самим корнем, увеличиваем глубину на 1
-				// Пример: C:\ -> depth 0; C:\Games -> depth 1; C:\Games\Warcraft -> depth 2
-				if len(path[len(root):]) > 0 && path[len(root)] == os.PathSeparator {
-					depthFromRoot = strings.Count(path[len(root):], string(os.PathSeparator))
-				} else { // Handle direct subfolders without a leading separator in path[len(root):]
-					depthFromRoot = 1
-				}
-			}
+		depth, err := depthFromRoot(root, path)
+		if err != nil {
+			return nil
 		}
 
 		if d.IsDir() {
-			if depthFromRoot > maxDepth {
-				return filepath.SkipDir // Пропускаем папки, находящиеся глубже maxDepth
+			if depth > maxDepth {
+				return filepath.SkipDir
 			}
-
-			folderName := d.Name()
-			for _, excluded := range excludedFolders {
-				if strings.EqualFold(folderName, excluded) {
-					return filepath.SkipDir // Пропускаем исключенные папки
+			if depth > 0 {
+				if _, skip := s.excludedFolders[strings.ToLower(d.Name())]; skip {
+					return filepath.SkipDir
 				}
 			}
-		} else if d.Type().IsRegular() && isTargetFile(d.Name()) {
-			foundPath = filepath.Dir(path)
-			found = true
-			return filepath.SkipAll // Найден целевой файл, останавливаем обход
+			return nil
+		}
+
+		if depth > maxDepth {
+			return nil
+		}
+		if !d.Type().IsRegular() || !isTargetFile(d.Name()) {
+			return nil
+		}
+
+		dir := filepath.Dir(path)
+		key := normalizePathKey(dir)
+		if _, exists := foundSet[key]; exists {
+			return nil
+		}
+
+		foundSet[key] = struct{}{}
+		found = append(found, dir)
+
+		if len(found) >= maxMatches {
+			return errMaxMatchesReached
 		}
 		return nil
 	})
 
-	if err != nil {
-		log.Printf("Ошибка при обходе директории %s: %v", root, err)
+	switch {
+	case walkErr == nil:
+	case errors.Is(walkErr, errMaxMatchesReached):
+	case errors.Is(walkErr, context.Canceled), errors.Is(walkErr, context.DeadlineExceeded):
+		return found, walkErr
+	default:
+		return found, walkErr
 	}
 
-	return foundPath, found
+	return found, nil
 }
 
-// getLogicalDrives возвращает список логических дисков в Windows.
 func getLogicalDrives() []string {
-	var drives []string
+	drives := make([]string, 0, 8)
 	for char := 'A'; char <= 'Z'; char++ {
 		drive := fmt.Sprintf("%c:\\", char)
 		if _, err := os.Stat(drive); err == nil {
@@ -100,122 +216,54 @@ func getLogicalDrives() []string {
 	return drives
 }
 
-// findPathInRegistry ищет путь установки Warcraft III в реестре Windows.
 func findPathInRegistry() (string, bool) {
-	regPath := `SOFTWARE\Blizzard Entertainment\Warcraft III`
+	const regPath = `SOFTWARE\Blizzard Entertainment\Warcraft III`
 
-	// HKEY_LOCAL_MACHINE
-	if k, err := registry.OpenKey(registry.LOCAL_MACHINE, regPath, registry.READ); err == nil {
-		if installPath, _, err := k.GetStringValue("InstallPath"); err == nil {
-			pathConfig := filepath.Join(installPath, "config.lod.ini")
-			pathExe := filepath.Join(installPath, "war3.exe")
-
-			// Проверяем наличие config.lod.ini или war3.exe в найденном пути
-			_, errConfig := os.Stat(pathConfig)
-			_, errExe := os.Stat(pathExe)
-
-			if errConfig == nil || errExe == nil { // Исправленное условие
-				k.Close()
-				return installPath, true
-			}
-		}
-		k.Close()
+	hives := []registry.Key{
+		registry.LOCAL_MACHINE,
+		registry.CURRENT_USER,
 	}
 
-	// HKEY_CURRENT_USER
-	if k, err := registry.OpenKey(registry.CURRENT_USER, regPath, registry.READ); err == nil {
-		if installPath, _, err := k.GetStringValue("InstallPath"); err == nil {
-			pathConfig := filepath.Join(installPath, "config.lod.ini")
-			pathExe := filepath.Join(installPath, "war3.exe")
-
-			// Проверяем наличие config.lod.ini или war3.exe в найденном пути
-			_, errConfig := os.Stat(pathConfig)
-			_, errExe := os.Stat(pathExe)
-
-			if errConfig == nil || errExe == nil {
-				k.Close()
-				return installPath, true
-			}
+	for _, hive := range hives {
+		k, err := registry.OpenKey(hive, regPath, registry.READ)
+		if err != nil {
+			continue
 		}
-		k.Close()
+
+		installPath, _, err := k.GetStringValue("InstallPath")
+		_ = k.Close()
+		if err != nil {
+			continue
+		}
+
+		installPath = strings.TrimSpace(installPath)
+		if installPath == "" {
+			continue
+		}
+
+		clean := filepath.Clean(installPath)
+		if hasInstallFiles(clean) {
+			return clean, true
+		}
 	}
 
 	return "", false
 }
 
-// FindConfigOrExeParallel параллельно ищет пути к файлам config.lod.ini или war3.exe на всех логических дисках.
-// Эта функция привязана к фронтенду Wails.
-func (s *Scanner) FindConfigOrExeParallel() []string {
-	excludedFolders := []string{"Windows", "Users", "ProgramData", "System Volume Information"}
-	drives := getLogicalDrives()
-
-	var wg sync.WaitGroup
-	results := make(chan string, len(drives)) // Буферизованный канал для результатов
-
-	for _, drive := range drives {
-		wg.Add(1)
-		go func(drive string) {
-			defer wg.Done()
-			if path, found := findFilesInFolder(drive, excludedFolders, 5); found {
-				results <- path
-			}
-		}(drive)
-	}
-
-	wg.Wait()      // Ждем завершения всех горутин
-	close(results) // Закрываем канал после завершения всех записей
-
-	uniquePaths := make(map[string]struct{})
-	var foundPaths []string
-	for path := range results {
-		if _, exists := uniquePaths[path]; !exists {
-			uniquePaths[path] = struct{}{}
-			foundPaths = append(foundPaths, path)
-		}
-	}
-	return foundPaths
+func hasInstallFiles(path string) bool {
+	_, errConfig := os.Stat(filepath.Join(path, "config.lod.ini"))
+	_, errExe := os.Stat(filepath.Join(path, "war3.exe"))
+	return errConfig == nil || errExe == nil
 }
 
-// CheckAndFindPaths - основная функция для поиска путей.
-// Эта функция будет привязана к фронтенду Wails.
+// CheckAndFindPaths scans registry + disks and returns unique sorted install paths.
 func (s *Scanner) CheckAndFindPaths() ([]string, error) {
-	log.Println("=== Начало CheckAndFindPaths ===")
-	log.Println("Выполняем поиск путей")
+	collected := make([]string, 0, 8)
 
-	// Находим путь в реестре
-	registryPath, foundInRegistry := findPathInRegistry()
-	log.Printf("Путь из реестра: \"%s\", найдено: %t\n", registryPath, foundInRegistry)
-
-	// Параллельно ищем пути на дисках
-	foundFolders := s.FindConfigOrExeParallel()
-	log.Printf("Найденные папки: %+v\n", foundFolders)
-
-	// Объединяем все найденные пути
-	combinedPathsMap := make(map[string]struct{})
-	if foundInRegistry {
-		combinedPathsMap[registryPath] = struct{}{}
-	}
-	for _, p := range foundFolders {
-		combinedPathsMap[p] = struct{}{}
+	if registryPath, ok := findPathInRegistry(); ok {
+		collected = append(collected, registryPath)
 	}
 
-	var resultPaths []string
-	for p := range combinedPathsMap {
-		resultPaths = append(resultPaths, p)
-	}
-
-	log.Printf("Всего найдено уникальных путей: %+v\n", resultPaths)
-	log.Println("=== Конец CheckAndFindPaths ===")
-
-	return resultPaths, nil
+	collected = append(collected, s.FindConfigOrExeParallel()...)
+	return uniqueSortedPaths(collected), nil
 }
-
-// contains - вспомогательная функция для проверки, содержит ли слайс строку
-// func contains(slice []string, item string) bool {
-// 	for _, s := range slice {
-// 		if s == item {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }

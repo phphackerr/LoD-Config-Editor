@@ -1,13 +1,19 @@
 import { writable } from 'svelte/store';
+import { Events } from '@wailsio/runtime';
 import {
+  CheckForComponentUpdates,
   CheckForUpdates,
   DoUpdate,
-  CheckForComponentUpdates,
+  RestartApp,
   UpdateComponent
 } from '/bindings/lce/backend/updater/updater';
-import { Events } from '@wailsio/runtime';
+import { toLocalizedError, tr } from './storeUtils';
 
-export const updaterStore = writable({
+const initialUpdaterState = {
+  loading: false,
+  success: false,
+  operation: '',
+  lastResult: null,
   available: false,
   version: '',
   body: '',
@@ -15,83 +21,247 @@ export const updaterStore = writable({
   downloading: false,
   progress: 0,
   error: null,
-  componentUpdates: [], // Array of {type, name, version, changelog}
+  componentUpdates: [],
   readyToRestart: false
-});
+};
+
+export const updaterStore = writable({ ...initialUpdaterState });
+let operationSeq = 0;
+
+const UPDATER_OP_CHECK = 'updater:check';
+const UPDATER_OP_DOWNLOAD_APP = 'updater:download-app';
+const UPDATER_OP_RESTART = 'updater:restart';
+const UPDATER_OP_UPDATE_COMPONENT = 'updater:update-component';
+
+function patchUpdaterStore(patch) {
+  updaterStore.update((state) => ({ ...state, ...patch }));
+}
+
+function createUpdaterResult(operation, { ok, data = null, error = null }) {
+  return {
+    ok: Boolean(ok),
+    operation,
+    data,
+    error: error ? String(error) : null
+  };
+}
+
+function startUpdaterOperation(operation, patch = {}) {
+  operationSeq += 1;
+  const token = operationSeq;
+
+  patchUpdaterStore({
+    loading: true,
+    success: false,
+    error: null,
+    operation,
+    ...patch
+  });
+  return token;
+}
+
+function finishUpdaterOperation(token, result, patch = {}) {
+  if (token !== operationSeq) {
+    return result;
+  }
+
+  patchUpdaterStore({
+    loading: false,
+    success: result.ok,
+    error: result.error,
+    operation: result.operation,
+    lastResult: result,
+    ...patch
+  });
+  return result;
+}
 
 export async function checkForUpdates() {
-  updaterStore.update((s) => ({ ...s, checking: true, error: null }));
+  const token = startUpdaterOperation(UPDATER_OP_CHECK, { checking: true });
 
   try {
-    // Check app updates
-    const result = await CheckForUpdates();
+    const [appResult, componentUpdates] = await Promise.all([
+      CheckForUpdates(),
+      CheckForComponentUpdates()
+    ]);
 
-    // Check component updates
-    const components = await CheckForComponentUpdates();
-
-    updaterStore.update((s) => ({
-      ...s,
+    const nextState = {
       checking: false,
-      available: result.available,
-      version: result.version,
-      body: result.body,
-      componentUpdates: components || [],
-      error: result.error || null
-    }));
-  } catch (err) {
-    updaterStore.update((s) => ({ ...s, checking: false, error: err.message }));
+      available: Boolean(appResult?.available),
+      version: appResult?.version ?? '',
+      body: appResult?.body ?? '',
+      componentUpdates: Array.isArray(componentUpdates) ? componentUpdates : [],
+      error: appResult?.error || null
+    };
+
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_CHECK, {
+        ok: !nextState.error,
+        data: {
+          app: appResult || {},
+          components: nextState.componentUpdates
+        },
+        error: nextState.error || null
+      }),
+      nextState
+    );
+  } catch (error) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_CHECK, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.updater.check_updates')
+      }),
+      { checking: false }
+    );
   }
 }
 
 export async function doUpdate(version) {
-  updaterStore.update((s) => ({ ...s, downloading: true, error: null, progress: 0 }));
+  const targetVersion = String(version || '').trim();
+  const token = startUpdaterOperation(UPDATER_OP_DOWNLOAD_APP, {
+    downloading: true,
+    readyToRestart: false,
+    progress: 0
+  });
+
+  if (!targetVersion) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_DOWNLOAD_APP, {
+        ok: false,
+        error: tr('ERRORS.updater.version_required')
+      }),
+      { downloading: false }
+    );
+  }
 
   try {
-    await DoUpdate(version);
-    // Update downloaded, ready to restart
-    updaterStore.update((s) => ({ ...s, downloading: false, progress: 100, readyToRestart: true }));
-  } catch (err) {
-    updaterStore.update((s) => ({ ...s, downloading: false, error: err.message }));
+    await DoUpdate(targetVersion);
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_DOWNLOAD_APP, {
+        ok: true,
+        data: { version: targetVersion }
+      }),
+      {
+        downloading: false,
+        progress: 100,
+        readyToRestart: true
+      }
+    );
+  } catch (error) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_DOWNLOAD_APP, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.updater.download_update')
+      }),
+      { downloading: false }
+    );
   }
 }
 
 export async function restartApp() {
+  const token = startUpdaterOperation(UPDATER_OP_RESTART);
+
   try {
-    // We need to import RestartApp from bindings, but it might not be generated yet.
-    // Assuming wails generates it.
-    const { RestartApp } = await import('/bindings/lce/backend/updater/updater');
     await RestartApp();
-  } catch (err) {
-    updaterStore.update((s) => ({ ...s, error: err.message }));
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_RESTART, {
+        ok: true
+      })
+    );
+  } catch (error) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_RESTART, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.updater.restart_app')
+      })
+    );
   }
 }
 
 export async function updateComponent(component) {
-  updaterStore.update((s) => ({ ...s, downloading: true, error: null }));
+  const token = startUpdaterOperation(UPDATER_OP_UPDATE_COMPONENT, {
+    downloading: true
+  });
+
+  if (!component || !component.name) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_UPDATE_COMPONENT, {
+        ok: false,
+        error: tr('ERRORS.updater.invalid_component_request')
+      }),
+      { downloading: false }
+    );
+  }
 
   try {
     await UpdateComponent(component);
 
-    // Remove from list
-    updaterStore.update((s) => ({
-      ...s,
-      downloading: false,
-      componentUpdates: s.componentUpdates.filter(
+    let remainingComponents = [];
+    updaterStore.update((state) => {
+      remainingComponents = state.componentUpdates.filter(
         (c) => c.name !== component.name || c.type !== component.type
-      )
-    }));
+      );
+      return {
+        ...state,
+        componentUpdates: remainingComponents
+      };
+    });
 
-    // Reload window to apply changes (simplest way for themes/locales)
+    const result = finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_UPDATE_COMPONENT, {
+        ok: true,
+        data: {
+          updatedComponent: component,
+          remainingComponents
+        }
+      }),
+      { downloading: false }
+    );
+
     window.location.reload();
-  } catch (err) {
-    updaterStore.update((s) => ({ ...s, downloading: false, error: err.message }));
+    return result;
+  } catch (error) {
+    return finishUpdaterOperation(
+      token,
+      createUpdaterResult(UPDATER_OP_UPDATE_COMPONENT, {
+        ok: false,
+        error: toLocalizedError(error, 'ERRORS.updater.update_component')
+      }),
+      { downloading: false }
+    );
   }
 }
 
-// Listen for progress events
-Events.On('update:progress', (event) => {
-  const data = event.data;
-  if (data.status === 'downloading') {
-    updaterStore.update((s) => ({ ...s, progress: data.percent }));
-  }
-});
+let offProgressListener = null;
+
+function ensureProgressListener() {
+  if (offProgressListener) return;
+
+  const listener = (event) => {
+    const payload = Array.isArray(event?.data) ? event.data[0] : event?.data;
+    if (!payload || payload.status !== 'downloading') return;
+    patchUpdaterStore({ progress: Number(payload.percent) || 0 });
+  };
+
+  offProgressListener = Events.On('update:progress', listener);
+}
+
+ensureProgressListener();
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (offProgressListener) {
+      offProgressListener();
+      offProgressListener = null;
+    }
+  });
+}

@@ -7,12 +7,15 @@
     "settings_tooltip": "Configuración",
     "minimize_tooltip": "Minimizar",
     "maximize_tooltip": "Maximizar",
-    "close_tooltip": "Cerrar"
+    "close_tooltip": "Cerrar",
+    "search_hotkey_label": "Ctrl + F",
+    "search_hotkey_tooltip": "Enfocar búsqueda (Ctrl + F)"
   },
   "SETTINGS": {
     "settings": "Configuración",
     "GENERAL": {
-      "general_tab": "General"
+      "general_tab": "General",
+      "windowed_mode": "Modo ventana"
     },
     "PATHS": {
       "paths_tab": "Rutas",
@@ -20,15 +23,50 @@
       "add_folder_tooltip": "Agregar carpeta",
       "paths_not_found": "No se ha encontrado el archivo. Por favor, seleccione la ruta al archivo.",
       "run_scanner": "Escanear",
-      "scanning": "Buscando rutas..."
+      "scanning": "Buscando rutas...",
+      "path_added": "Game path added",
+      "path_already_added": "This path is already in the list",
+      "select_game_folder_title": "Select game folder"
     },
     "LANGUAGE": {
       "language_tab": "Idioma",
-      "lang": "Idioma"
+      "lang": "Idioma",
+      "tools": "Herramientas",
+      "add_language": "Agregar idioma",
+      "translator": "Traductor",
+      "open_folder": "Abrir carpeta",
+      "add_new_language": "Agregar nuevo idioma",
+      "code_placeholder": "Código (ej. 'fr')",
+      "name_placeholder": "Nombre (ej. 'Francés')",
+      "author_placeholder": "Autor",
+      "create": "Crear",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "close": "Cerrar",
+      "search_placeholder": "Buscar claves/valores...",
+      "key": "Clave",
+      "status_created": "created",
+      "status_selected": "selected",
+      "example_code": "fr",
+      "example_name": "Español",
+      "example_author": "Tu nombre"
     },
     "THEME": {
       "theme_tab": "Tema",
-      "theme_tooltip": "Tema"
+      "theme_tooltip": "Tema",
+      "tools": "Herramientas",
+      "add_theme": "Añadir tema",
+      "editor": "Editor",
+      "open_folder": "Abrir carpeta",
+      "add_new_theme": "Añadir nuevo tema",
+      "name_placeholder": "Nombre (ej. 'dark-blue')",
+      "base_theme": "Tema base",
+      "saved_success": "¡Tema guardado con éxito!",
+      "no_themes_found": "No themes found",
+      "status_applied": "applied",
+      "status_created": "created",
+      "theme_prefix": "Theme",
+      "example_name": "my-theme"
     },
     "ABOUT": {
       "about_tab": "Acerca de",
@@ -45,6 +83,57 @@
       "translators": "Traductores",
       "thanks": "Agradecimientos especiales",
       "thanksD": "Muchas gracias a todos los que ayudan al proyecto"
+    },
+    "LANGUAGE_EDITOR": {
+      "saved_prefix": "Saved",
+      "saved_suffix": "translations",
+      "title": "Editor de idioma"
+    },
+    "THEME_EDITOR": {
+      "add_layer": "Add layer",
+      "add_stop": "Add stop",
+      "alpha": "Alpha",
+      "alpha_short": "A",
+      "amount": "Amount",
+      "angle": "Angle",
+      "apply_json": "Apply JSON",
+      "blur": "Blur",
+      "color": "Color",
+      "derived": "Derived",
+      "derived_hint": "alpha is clamped to 0..1, lighten/darken use RGB delta values.",
+      "derived_only_for_color": "Derived values are supported only for color tokens",
+      "from_token": "From token",
+      "hue_short": "H",
+      "inset": "Inset",
+      "kind": "Kind",
+      "layer": "Layer",
+      "literal": "Literal",
+      "literal_json": "Literal JSON",
+      "literal_json_object_required": "Literal JSON must be an object",
+      "loading_theme": "Loading theme",
+      "no_color_tokens": "No color tokens",
+      "no_compatible_ref_tokens": "No compatible tokens available for reference",
+      "no_tokens_found": "No tokens found",
+      "none": "(none)",
+      "operation": "Operation",
+      "pick": "Pick",
+      "position": "Position",
+      "preview": "Preview",
+      "preview_hint": "Buttons / panels / statuses",
+      "ref": "Ref",
+      "reference_token": "Reference token",
+      "reset_done": "Theme draft reset",
+      "search_token": "Search token...",
+      "select_token": "Select a token",
+      "spread": "Spread",
+      "stop": "Stop",
+      "title": "Editor de temas",
+      "tokens": "Tokens",
+      "unit": "Unit",
+      "unresolved_color": "Unresolved color value for selected state",
+      "unresolved_number": "Unresolved number value for selected state",
+      "color_input_placeholder": "rgba(255, 120, 60, 0.8)",
+      "hex_input_placeholder": "#ff7800"
     }
   },
   "HOTKEYS": {
@@ -192,6 +281,7 @@
     "watercolor": "Color de Agua",
     "fogdensity": "Densidad de niebla en el minimapa",
     "chatmessageduration": "Duración del mensaje de chat",
+    "uitextscale": "Escala de texto de la interfaz",
     "cameraheight": "Altura de la cámara",
     "cameraangle": "Ángulo de la cámara",
     "TOOLTIPS": {
@@ -231,7 +321,8 @@
       "showfullwardradiusplague_tooltip": "Cambia el cursor del círculo cuando se lanza cobra de Venomancer con un alcance igual al rango de aura del ward",
       "showfullwardradiusnether_tooltip": "Cambia el cursor del círculo cuando se lanza Toten de Pugna con un alcance igual al rango de visibilidad",
       "showfullwardradiustombstone_tooltip": "Cambia el cursor del círculo cuando se lanza Tumba de Undying con un alcance igual al rango de ataque",
-      "showfullwardradiusicyspirit_tooltip": "Cambia el cursor en el círculo cuando se lanza Espíritu Helado con un radio igual al rango de ataque del ward"
+      "showfullwardradiusicyspirit_tooltip": "Cambia el cursor en el círculo cuando se lanza Espíritu Helado con un radio igual al rango de ataque del ward",
+      "uitextscale_tooltip": "Ajusta la escala del texto de la interfaz en juego. Predeterminado: 0.8, rango: 0.2..2.0."
     }
   },
   "HPBARS": {
@@ -275,9 +366,15 @@
     "not_downloaded": "No Descargado",
     "loading": "Cargando",
     "download": "Descargado",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "stop": "Detener",
+    "paused": "Pausado",
+    "stopping": "Deteniendo",
     "map_not_found": "Mapa no encontrado",
     "loading_map_info": "Cargando información del mapa",
-    "changelog": "Cambios para"
+    "changelog": "Cambios para",
+    "loading_changelog": "Loading changelog"
   },
   "ACTIONS": {
     "open_game_folder": "Abrir la carpeta del juego",
@@ -288,7 +385,11 @@
     "external_changes": "Cambios externos",
     "accept_changes": "Aceptar cambios",
     "discard_changes": "Descartar cambios",
-    "watcher_working": "Trabajando"
+    "watcher_working": "Trabajando",
+    "section_status": "section",
+    "value_deleted": "deleted",
+    "value_empty": "empty",
+    "value_missing": "missing"
   },
   "UPDATER": {
     "update_available": "Actualización disponible",
@@ -299,5 +400,152 @@
     "component_updates": "Actualizaciones de componentes",
     "update": "Actualizar",
     "downloading_progress": "Descargando..."
+  },
+  "COMMON": {
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "creating": "Creando",
+    "edit": "Editar",
+    "loading": "Cargando",
+    "remove": "Eliminar",
+    "reset": "Restablecer",
+    "save": "Guardar",
+    "saving": "Guardando",
+    "search": "Buscar...",
+    "state": "Estado",
+    "type": "Tipo",
+    "unknown": "Desconocido",
+    "value": "Valor",
+    "dismiss_notification": "Descartar notificación"
+  },
+  "CONTROLS": {
+    "hex": "HEX",
+    "hue": "Hue",
+    "toggle_value_type": "Toggle value type"
+  },
+  "ERRORS": {
+    "about": {
+      "app_version": "Failed to get app version",
+      "discord_stats": "Failed to get Discord stats"
+    },
+    "actions": {
+      "launch_game": "Failed to launch game",
+      "open_config_file": "Failed to open config file",
+      "open_game_folder": "Failed to open game folder"
+    },
+    "app_settings": {
+      "delete_path": "Failed to delete game path",
+      "get_setting": "Failed to get application setting",
+      "load": "Failed to load application settings",
+      "reset": "Failed to reset application settings",
+      "run_scanner": "Failed to run game path scanner",
+      "update": "Failed to update application settings"
+    },
+    "config": {
+      "check_availability": "Failed to check config availability",
+      "load": "Failed to load config",
+      "save_option": "Failed to save [{section}] {option}",
+      "stale_load_ignored": "Stale config load ignored"
+    },
+    "controls": {
+      "invalid_target": "Invalid control target",
+      "key_not_found": "Key not found",
+      "save_chat": "Failed to save chat value",
+      "save_checkbox": "Failed to save checkbox value",
+      "save_color": "Failed to save color value",
+      "save_dropdown": "Failed to save dropdown value",
+      "save_slider": "Failed to save slider value"
+    },
+    "hotkeys": {
+      "load_value": "Failed to load hotkey value",
+      "save": "Failed to save hotkey"
+    },
+    "hpbars": {
+      "load_settings": "Failed to load HP bars settings"
+    },
+    "i18n": {
+      "create_language": "Failed to create language \"{code}\"",
+      "init": "Failed to initialize i18n",
+      "language_code_and_name_required": "Language code and name are required",
+      "load_languages": "Failed to load languages",
+      "load_locale": "Failed to load locale {code}",
+      "load_selected_translations": "Failed to load translations for selected languages",
+      "load_translations": "Failed to load translations for \"{code}\"",
+      "save_translations": "Failed to save translations for \"{code}\"",
+      "saved_but_reload_failed": "Saved, but failed to reload current language"
+    },
+    "language": {
+      "apply": "Failed to apply language",
+      "open_editor": "Failed to open language editor",
+      "open_folder": "Failed to open locales folder",
+      "save_setting": "Failed to save language in app settings"
+    },
+    "paths": {
+      "add_path": "Failed to add path",
+      "delete_path": "Failed to delete path",
+      "open_folder": "Failed to open folder",
+      "pick_folder": "Failed to pick folder",
+      "run_scanner": "Failed to run scanner",
+      "scan_folders": "Failed to scan game folders",
+      "select_game_path": "Failed to select game path",
+      "update_game_path": "Failed to update game path"
+    },
+    "search": {
+      "invalid_item": "Invalid searchable item",
+      "invalid_item_id": "Invalid searchable item id",
+      "invalid_item_update": "Invalid searchable item update"
+    },
+    "theme": {
+      "apply": "Failed to apply theme \"{theme}\"",
+      "apply_initial": "Failed to apply initial theme \"{theme}\"",
+      "compile": "Failed to compile theme \"{theme}\"",
+      "create": "Failed to create theme \"{theme}\"",
+      "load_theme": "Failed to load theme \"{theme}\"",
+      "load_themes": "Failed to load themes",
+      "name_required": "Theme name is required",
+      "open_folder": "Failed to open themes folder",
+      "refresh": "Failed to refresh theme \"{theme}\"",
+      "save": "Failed to save theme \"{theme}\"",
+      "save_selected": "Failed to save selected theme in settings"
+    },
+    "theme_editor": {
+      "no_opened_theme": "No opened theme to save",
+      "no_source_theme": "No source theme to reset from",
+      "open": "Failed to open theme \"{theme}\"",
+      "reset": "Failed to reset theme draft",
+      "save": "Failed to save theme \"{theme}\"",
+      "save_apply_failed": "Theme \"{theme}\" saved, but apply failed",
+      "stale_open_ignored": "Stale theme open request ignored",
+      "theme_id_required": "Theme id is required",
+      "token_id_required": "Token id is required",
+      "token_not_found": "Token \"{token}\" not found",
+      "token_updater_required": "Token updater must be a function"
+    },
+    "updater": {
+      "check_updates": "Failed to check for updates",
+      "download_update": "Failed to download update",
+      "invalid_component_request": "Invalid component update request",
+      "restart_app": "Failed to restart app",
+      "update_component": "Failed to update component",
+      "version_required": "Update version is required"
+    },
+    "useful": {
+      "download_map": "Failed to download map",
+      "load_map_info": "Failed to load map info"
+    },
+    "watcher": {
+      "apply_external_changes": "Failed to apply external config changes",
+      "callback_failed": "Config change callback failed",
+      "check_external_changes": "Failed to check external config changes",
+      "discard_external_changes": "Failed to discard external config changes",
+      "path_required": "Config watcher path is required",
+      "reload_after_apply": "Failed to reload config after applying changes",
+      "reload_after_discard": "Failed to reload config after discarding changes",
+      "restart": "Failed to restart watcher",
+      "start": "Failed to start config watcher",
+      "stop": "Failed to stop watcher",
+      "stop_previous": "Failed to stop previous watcher"
+    },
+    "unexpected": "Error inesperado"
   }
 }

@@ -113,7 +113,8 @@ tasks:
     deps:
       - task: install:frontend:deps
     cmds:
-      - npm run dev -- --port {{.VITE_PORT}} --strictPort
+      - node -e "require('node:fs').rmSync('node_modules/.vite',{recursive:true,force:true})"
+      - npm run dev -- --port {{.VITE_PORT}} --strictPort --force
 
   update:build-assets:
     summary: Updates the build assets

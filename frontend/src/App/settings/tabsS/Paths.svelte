@@ -5,9 +5,14 @@
 </script>
 
 <script>
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import { appSettings, runScanner, deletePath } from '../../lib/store/appSettings';
+  import {
+    appSettings,
+    appSettingsState,
+    runScanner,
+    deletePath
+  } from '../../lib/store/appSettings';
   import Radio from './components/Radio.svelte';
   import AddFolderButton from './components/AddFolderButton.svelte';
   import ScannerOverlay from './components/ScannerOverlay.svelte';
@@ -16,9 +21,9 @@
   let gamePathOptions = [];
   let selectedGamePath = '';
   let isLoadingPaths = false;
+  let localError = '';
 
-  // подписка на изменения стора
-  appSettings.subscribe((settings) => {
+  const unsubscribe = appSettings.subscribe((settings) => {
     if (settings.all_paths && settings.all_paths.length > 0) {
       gamePathOptions = settings.all_paths.map((path) => ({
         label: path,
@@ -34,26 +39,38 @@
     }
   });
 
+  onDestroy(() => {
+    unsubscribe?.();
+  });
+
   onMount(async () => {
     const isFirstRun = get(appSettings).first_run;
 
     if (isFirstRun) {
       isLoadingPaths = true;
-      try {
-        await runScanner();
-      } finally {
-        isLoadingPaths = false;
+      const result = await runScanner();
+      if (!result.ok) {
+        localError = result.error || $t('ERRORS.paths.scan_folders');
       }
+      isLoadingPaths = false;
     }
   });
 
   async function handleDeletePath(path) {
-    await deletePath(path);
+    localError = '';
+    const result = await deletePath(path);
+    if (!result.ok) {
+      localError = result.error || $t('ERRORS.paths.delete_path');
+    }
   }
 
   async function handleRunScanner() {
     isLoadingPaths = true;
-    await runScanner();
+    localError = '';
+    const result = await runScanner();
+    if (!result.ok) {
+      localError = result.error || $t('ERRORS.paths.run_scanner');
+    }
     isLoadingPaths = false;
   }
 </script>
@@ -62,6 +79,10 @@
 
 {#if !isLoadingPaths}
   <div class="general-settings">
+    {#if localError || ($appSettingsState.error && $appSettingsState.operation === 'appSettings:run-scanner')}
+      <div class="error-message">{localError || $appSettingsState.error}</div>
+    {/if}
+
     {#if gamePathOptions.length > 0}
       <h3 class="choose-text">{$t('SETTINGS.PATHS.select_path')}</h3>
       <Radio
@@ -106,10 +127,21 @@
     gap: 15px;
   }
 
+  .error-message {
+    margin: 0 auto 14px;
+    max-width: 720px;
+    color: var(--status-error-text, #fecaca);
+    background: var(--status-error-bg, rgba(220, 38, 38, 0.16));
+    border: 1px solid var(--status-error-border, rgba(220, 38, 38, 0.38));
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
   .run-scanner-button {
     padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
+    background-color: var(--action-accent-bg, #e6c200);
+    color: var(--surface-base, #1a1a1a);
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -121,7 +153,7 @@
   }
 
   .run-scanner-button:hover {
-    background-color: #0056b3;
+    background-color: var(--action-accent-bg-hover, #e6a800);
     transform: translateY(-2px);
   }
 </style>

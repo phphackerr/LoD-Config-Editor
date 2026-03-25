@@ -1,9 +1,8 @@
 <script>
-  // @ts-nocheck
   import { createEventDispatcher } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { getConfigValue, setConfigValue } from '../../lib/store/config';
-  import { isInternalChange } from '../../lib/store/internalChange';
+  import { getConfigValue } from '../../lib/store/config';
+  import { persistControlValue } from './lib/controlPipeline';
   import Base from './Base.svelte';
 
   const dispatch = createEventDispatcher();
@@ -32,41 +31,34 @@
       return;
     }
 
-    const value = await getConfigValue(section, option);
-    _checked = reverted ? value.toLowerCase() !== 'true' : value.toLowerCase() === 'true';
+    const value = String((await getConfigValue(section, option)) || '').toLowerCase();
+    const isTrue = value === 'true';
+    _checked = reverted ? !isTrue : isTrue;
   }
 
   async function handleChange(event, configAvailable) {
     if (!configAvailable) return;
 
-    const newValue = event.target.checked;
+    const newValue = Boolean(event?.target?.checked);
+    const previousValue = checked !== undefined ? Boolean(checked) : Boolean(_checked);
+    const persistedValue = (reverted ? !newValue : newValue).toString();
 
+    const result = await persistControlValue(
+      section,
+      option,
+      persistedValue,
+      $t('ERRORS.controls.save_checkbox')
+    );
+
+    const nextValue = result.ok ? newValue : previousValue;
+    _checked = nextValue;
     if (checked !== undefined) {
-      // Controlled mode
-      if (section && option) {
-        try {
-          isInternalChange.mark();
-          await setConfigValue(section, option, (reverted ? !newValue : newValue).toString());
-          _checked = newValue;
-          onUpdate?.(newValue);
-        } catch (err) {
-          console.error('Ошибка сохранения чекбокса:', err);
-          _checked = !newValue; // откат
-        }
-      }
-      dispatch('checked', { checked: newValue });
-      return;
+      checked = nextValue;
+      dispatch('checked', { checked: nextValue, error: result.error });
     }
 
-    // Uncontrolled mode
-    try {
-      isInternalChange.mark();
-      await setConfigValue(section, option, (reverted ? !newValue : newValue).toString());
-      _checked = newValue;
-      onUpdate?.(newValue);
-    } catch (err) {
-      console.error('Ошибка сохранения чекбокса:', err);
-      _checked = !newValue; // откат
+    if (result.ok) {
+      onUpdate?.(nextValue);
     }
   }
 
@@ -159,7 +151,7 @@
     -webkit-appearance: none;
     width: 16px;
     height: 16px;
-    border: 2px solid var(--color);
+    border: 2px solid var(--text-color-primary);
     border-radius: 4px;
     position: relative;
     cursor: pointer;
@@ -167,14 +159,14 @@
   }
 
   .checkbox input[type='checkbox']:checked {
-    background: #ffd700;
-    border-color: #ffd700;
+    background: var(--control-active-bg-color, #ffd700);
+    border-color: var(--control-active-bg-color, #ffd700);
   }
 
   .checkbox input[type='checkbox']:checked::after {
     content: '✓';
     position: absolute;
-    color: #000;
+    color: var(--control-active-text-color, #000);
     font-size: 12px;
     top: 50%;
     left: 50%;
@@ -182,18 +174,18 @@
   }
 
   .checkbox input[type='checkbox']:hover {
-    border-color: #ffd700;
+    border-color: var(--control-focus-border-color, #ffd700);
   }
 
   .checkbox input[type='checkbox']:disabled {
-    opacity: 0.5;
+    opacity: var(--control-disabled-opacity, 0.5);
     cursor: not-allowed;
-    border-color: #666;
+    border-color: var(--control-disabled-border-color, #666);
   }
 
   .checkbox.disabled {
     cursor: not-allowed;
-    opacity: 0.5;
-    background: rgba(255, 255, 255, 0.02);
+    opacity: var(--control-disabled-opacity, 0.5);
+    background: var(--control-disabled-bg-color, rgba(255, 255, 255, 0.02));
   }
 </style>

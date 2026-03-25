@@ -11,7 +11,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 /**
- * CheckForComponentUpdates fetches manifest and compares with local versions
+ * CheckForComponentUpdates fetches manifest and compares with local versions.
  * @returns {$CancellablePromise<$models.ComponentUpdate[]>}
  */
 export function CheckForComponentUpdates() {
@@ -21,7 +21,7 @@ export function CheckForComponentUpdates() {
 }
 
 /**
- * CheckForUpdates checks if a new version is available on GitHub
+ * CheckForUpdates checks if a new app version is available on GitHub.
  * @returns {$CancellablePromise<$models.UpdateCheckResult>}
  */
 export function CheckForUpdates() {
@@ -31,16 +31,16 @@ export function CheckForUpdates() {
 }
 
 /**
- * DoUpdate downloads the new version side-by-side and launches it
- * @param {string} version
+ * DoUpdate downloads a new executable side-by-side and marks update as ready.
+ * @param {string} targetVersion
  * @returns {$CancellablePromise<void>}
  */
-export function DoUpdate(version) {
-    return $Call.ByID(1725521721, version);
+export function DoUpdate(targetVersion) {
+    return $Call.ByID(1725521721, targetVersion);
 }
 
 /**
- * LoadLocalVersions loads versions from versions.json or initializes with defaults
+ * LoadLocalVersions loads versions from manifest.json in AppData.
  * @returns {$CancellablePromise<$models.ComponentVersions>}
  */
 export function LoadLocalVersions() {
@@ -50,7 +50,7 @@ export function LoadLocalVersions() {
 }
 
 /**
- * RestartApp launches the new executable and quits the current one
+ * RestartApp launches the new executable and quits current process.
  * @returns {$CancellablePromise<void>}
  */
 export function RestartApp() {
@@ -58,7 +58,7 @@ export function RestartApp() {
 }
 
 /**
- * SaveLocalVersions saves versions to versions.json
+ * SaveLocalVersions saves versions to manifest.json in AppData.
  * @param {$models.ComponentVersions} versions
  * @returns {$CancellablePromise<void>}
  */
@@ -67,7 +67,7 @@ export function SaveLocalVersions(versions) {
 }
 
 /**
- * UpdateComponent downloads the component file and updates versions.json
+ * UpdateComponent downloads component file and updates local component versions.
  * @param {$models.ComponentUpdate} update
  * @returns {$CancellablePromise<void>}
  */

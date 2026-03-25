@@ -17,9 +17,9 @@
 
 ## 🚀 Installation
 
-1.  Download the latest release from the [Releases](https://github.com/phphackerr/LoD-Config-Editor/releases) page.
-2.  Run `LCE_Setup.exe` (or the portable executable).
-3.  On first launch, the application will attempt to locate your Warcraft III folder. If not found, you can specify it manually in the settings.
+1. Download the latest release from the [Releases](https://github.com/phphackerr/LoD-Config-Editor/releases) page.
+2. Run `LCE_Setup.exe` (or the portable executable).
+3. On first launch, the application will attempt to locate your Warcraft III folder. If not found, you can specify it manually in the settings.
 
 ## 🛠️ Development
 
@@ -33,21 +33,22 @@ This project is built using [Wails3](https://v3alpha.wails.io/) (Go + Svelte).
 
 ### Setup
 
-1.  Clone the repository:
+1. Clone the repository:
 
     ```bash
     git clone https://github.com/phphacker/lce.git
     cd lce
     ```
 
-2.  Install frontend dependencies:
+2. Install frontend dependencies:
 
     ```bash
     cd frontend
     npm install
     ```
 
-3.  Run in development mode:
+3. Run in development mode:
+
     ```bash
     wails3 dev
     ```
@@ -62,15 +63,31 @@ wails3 build
 
 The output binary will be located in the `bin` directory.
 
+### Smoke Checks
+
+Run automated release smoke checks:
+
+```bash
+task smoke
+```
+
+Windows PowerShell alternative:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke.ps1
+```
+
+Manual pre-release scenarios are documented in [docs/SMOKE_CHECKLIST.md](docs/SMOKE_CHECKLIST.md).
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 📄 License
 

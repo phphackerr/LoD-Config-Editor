@@ -3,9 +3,11 @@ package map_downloader
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -16,14 +18,39 @@ func (md *MapDownloader) GetChangelog(version string) (string, error) {
 	versionNumber := re.ReplaceAllString(version, "")
 
 	url := fmt.Sprintf("https://d1stats.ru/lod-%s-changelog/?lang=en", versionNumber)
-	resp, err := md.client.Get(url)
+
+	var lastErr error
+	for attempt := 1; attempt <= changelogAttempts; attempt++ {
+		result, err := md.getChangelogOnce(url)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+
+		if attempt == changelogAttempts || !isRetryableRequestError(err) {
+			break
+		}
+
+		delay := retryDelay(attempt)
+		log.Printf("GetChangelog: ошибка попытки %d/%d: %v. Повтор через %s", attempt, changelogAttempts, err, delay)
+		time.Sleep(delay)
+	}
+
+	return "", lastErr
+}
+
+func (md *MapDownloader) getChangelogOnce(url string) (string, error) {
+	resp, err := md.getWithTimeout(url, changelogTimeout)
 	if err != nil {
 		return "", fmt.Errorf("ошибка HTTP-запроса к changelog: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("получен не-200 статус код для changelog: %d", resp.StatusCode)
+		return "", &httpStatusError{
+			StatusCode: resp.StatusCode,
+			Context:    "получен не-200 статус код для changelog",
+		}
 	}
 
 	htmlBytes, err := io.ReadAll(resp.Body)

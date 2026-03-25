@@ -1,8 +1,11 @@
 <script>
   import { updateGamePath } from '../../../lib/store/appSettings';
   import { DeleteIc, FolderIc } from '../../../lib/icons';
+  import { notifyError } from '../../../lib/store/notifications';
+  import { toErrorMessage } from '../../../lib/store/storeUtils';
   import { tt } from '../../../lib/tooltip';
   import { OpenFolderInExplorer } from '/bindings/lce/backend/utils/utils';
+  import { t } from 'svelte-i18n';
 
   export let options = [];
   export let selectedValue;
@@ -13,8 +16,22 @@
     if (selectedValue == newValue) {
       return;
     }
+    const previousValue = selectedValue;
     selectedValue = newValue;
-    await updateGamePath(newValue);
+
+    const result = await updateGamePath(newValue);
+    if (!result.ok) {
+      selectedValue = previousValue;
+      notifyError(result.error || $t('ERRORS.paths.update_game_path'));
+    }
+  }
+
+  async function handleOpenFolder(path) {
+    try {
+      await OpenFolderInExplorer(path);
+    } catch (error) {
+      notifyError(toErrorMessage(error, $t('ERRORS.paths.open_folder')));
+    }
   }
 
   function handleKeyDown(event, option) {
@@ -45,10 +62,7 @@
       />
       <span class="custom-radio-checkmark"></span>
       <span class="radio-label-text">{option.label}</span>
-      <button
-        class="folder button"
-        on:click|stopPropagation={() => OpenFolderInExplorer(option.value)}
-      >
+      <button class="folder button" on:click|stopPropagation={() => handleOpenFolder(option.value)}>
         <FolderIc />
       </button>
       <button class="delete button" on:click|stopPropagation={() => onDelete(option.value)}>
@@ -65,7 +79,7 @@
     gap: 12px;
     width: calc(100% - 30px);
     border-radius: 12px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--surface-panel-muted, rgba(0, 0, 0, 0.3));
     padding: 16px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
   }
@@ -76,18 +90,18 @@
     cursor: pointer;
     padding: 12px 20px;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--element-bg-color, rgba(255, 255, 255, 0.2));
     transition:
       background-color 0.3s ease,
       transform 0.3s ease,
       box-shadow 0.3s ease;
     font-size: 16px;
-    color: #333333;
+    color: var(--text-color, #f6f6f6);
     user-select: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
   .custom-radio-container:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--element-bg-hover-color, rgba(255, 255, 255, 0.3));
     transform: scale(1.03);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
   }
@@ -99,9 +113,9 @@
     position: relative;
     height: 24px;
     width: 24px;
-    border: 2px solid #ffffff;
+    border: 2px solid var(--text-color-primary, #fff);
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: var(--surface-panel-muted, rgba(0, 0, 0, 0.3));
     transition:
       background-color 0.4s ease,
       transform 0.4s ease;
@@ -111,9 +125,9 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   }
   .custom-radio-container input[type='radio']:checked + .custom-radio-checkmark {
-    background-color: #ffffff;
-    border-color: #007bff;
-    box-shadow: 0 0 0 8px rgba(0, 123, 255, 0.2);
+    background-color: var(--text-color-primary, #fff);
+    border-color: var(--accent-color, #ffd700);
+    box-shadow: 0 0 0 8px var(--status-warning-bg, rgba(245, 158, 11, 0.12));
     transform: scale(1.2);
     animation: pulse 0.6s forwards;
   }
@@ -129,7 +143,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #007bff;
+    background: var(--accent-color, #ffd700);
     transform: translate(-50%, -50%);
   }
 
@@ -139,7 +153,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis; /* Добавляет многоточие, если текст слишком длинный */
-    color: #d4cbcb;
+    color: var(--text-color-secondary, #d4cbcb);
   }
 
   .button {
@@ -147,7 +161,7 @@
     height: 35px;
     background: none;
     border: none;
-    color: #256aaf;
+    color: var(--status-info-text, #bae6fd);
     font-size: 1.2em;
     cursor: pointer;
     margin-left: 10px; /* Отступ от текста */
@@ -157,16 +171,16 @@
   }
 
   .button:hover {
-    color: #318ce7;
+    color: var(--accent-color, #ffd700);
     transform: scale(1.1);
   }
 
   .delete {
-    color: #ff4d4d; /* Красный цвет для кнопки удаления */
+    color: var(--status-error-text, #fecaca); /* Красный цвет для кнопки удаления */
   }
 
   .delete:hover {
-    color: #cc0000; /* Темно-красный при наведении */
+    color: var(--action-danger-bg, #ca3333); /* Темно-красный при наведении */
   }
 
   @keyframes pulse {

@@ -1,8 +1,7 @@
 <script>
-  // @ts-nocheck
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { activeSettingsTab } from '../lib/store/settingsModal';
+  import { activeSettingsTab, setActiveSettingsTab } from '../lib/store/settingsModal';
 
   // Импортируем все компоненты из папки tabs
   const tabs = import.meta.glob('./tabsS/*.svelte', { eager: true });
@@ -33,7 +32,6 @@
       activeTab = tabComponents[0].id;
     } else if (tabComponents.length === 0) {
       activeTab = '';
-      console.warn('No tab components found!');
     }
   }
 
@@ -50,7 +48,7 @@
         // или чтобы не переключало обратно при навигации.
         // Но если мы сбросим сразу, то svelte может не успеть среагировать?
         // Нет, синхронно должно быть ок.
-        activeSettingsTab.set('');
+        setActiveSettingsTab('');
       }
     });
     return unsubscribe;
@@ -93,17 +91,17 @@
   .tab-bar {
     display: flex;
     flex-direction: column;
-    background: var(--settings-tabbar-background);
+    background: var(--tab-background, #363636);
     width: 15%;
     min-width: 150px;
     padding-top: 10px;
-    box-shadow: var(--settings-tabbar-box-shadow);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     z-index: 1;
   }
   .tab-btn {
-    background: var(--settings-tab-bg-color);
-    border: var(--settings-tab-border);
-    color: var(--settings-tab-text-color);
+    background: none;
+    border: none;
+    color: var(--tab-color, #ccc);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -111,14 +109,16 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    transition: var(--settings-tab-transition);
+    transition:
+      background 0.2s,
+      color 0.2s;
     width: 100%;
     text-align: left;
   }
   .tab-btn.active {
-    background: var(--settings-tab-bg-color-active);
-    color: var(--settings-tab-text-color-active);
-    border-right: var(--settings-tab-right-border);
+    background: var(--tab-active-background, #181c20);
+    color: var(--primary-color, #3ba475);
+    border-right: 3px solid var(--primary-color, #3ba475);
     border-bottom: none;
   }
   .tab-icon {

@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@wailsio/runtime": "^3.0.0-alpha.77",
-    "svelte-awesome-color-picker": "^4.1.0",
+    "colord": "^2.9.3",
     "svelte-i18n": "^4.0.1",
     "svelte-icons": "^2.1.0",
     "svelte-kit": "^1.2.0",

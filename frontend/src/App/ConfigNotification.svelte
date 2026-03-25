@@ -16,7 +16,6 @@
       } else {
         _isConfigAvailable = await isConfigAvailable();
       }
-      console.log('Config check:', _isConfigAvailable, 'Path:', path);
       showNotification = !_isConfigAvailable;
     })();
   });
@@ -25,8 +24,8 @@
 {#if showNotification}
   <div class="notification">
     <div class="notification-content">
-      <span>{$t('config_not_found')}</span>
-      <button onclick={openSettings}>{$t('SETTING.GENERAL.select_path')}</button>
+      <span>{$t('SETTINGS.PATHS.paths_not_found')}</span>
+      <button onclick={openSettings}>{$t('SETTINGS.PATHS.select_path')}</button>
     </div>
   </div>
 {/if}
@@ -37,8 +36,8 @@
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 0, 0, 0.5);
-    border: 1px solid rgba(255, 0, 0, 0.3);
+    background: var(--status-error-bg, rgba(220, 38, 38, 0.16));
+    border: 1px solid var(--status-error-border, rgba(220, 38, 38, 0.38));
     border-radius: 4px;
     padding: 12px 20px;
     z-index: 1000;
@@ -49,13 +48,13 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    color: #fff;
+    color: var(--status-error-text, #fecaca);
   }
 
   button {
-    background: rgba(16, 245, 27, 0.212);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    color: #fff;
+    background: var(--action-primary-bg, #3ba475);
+    border: 1px solid var(--status-success-border, rgba(36, 147, 79, 0.38));
+    color: var(--text-color-primary, #fff);
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -63,6 +62,6 @@
   }
 
   button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--action-primary-bg-hover, #2e8b57);
   }
 </style>

@@ -1,5 +1,5 @@
 // 🔑 Справочник из твоего кода
-import { KEY_TO_CODE, CODE_TO_CANONICAL_KEY } from "./keyCodes";
+import { KEY_TO_CODE } from './keyCodes';
 
 // Хелпер для красивого отображения
 function formatKeyName(name) {
@@ -7,6 +7,9 @@ function formatKeyName(name) {
 
   // Всегда с маленькой буквы для проверки
   const val = name.toLowerCase();
+
+  if (val === 'wheelup') return 'wheelUp';
+  if (val === 'wheeldn') return 'wheelDn';
 
   // Однобуквенные и цифры → просто в UpperCase
   if (val.length === 1) {
@@ -19,7 +22,7 @@ function formatKeyName(name) {
 
 // Универсальная нормализация
 export function normalizeKey(input) {
-  if (!input) return "";
+  if (!input) return '';
 
   let str = input.toString().trim();
 
@@ -29,10 +32,10 @@ export function normalizeKey(input) {
   const parts = str.match(/0x[0-9a-f]+|[a-z]+/gi) || [];
 
   const modifierMap = {
-    ctrl: "Ctrl",
-    control: "Ctrl",
-    shift: "Shift",
-    alt: "Alt",
+    ctrl: 'Ctrl',
+    control: 'Ctrl',
+    shift: 'Shift',
+    alt: 'Alt'
   };
 
   const result = [];
@@ -41,10 +44,17 @@ export function normalizeKey(input) {
     if (/^0x[0-9a-f]+$/i.test(part)) {
       // HEX → ищем в словаре
       const found = Object.entries(KEY_TO_CODE).find(
-        ([, v]) => v.toLowerCase() === part.toLowerCase(),
+        ([, v]) => v.toLowerCase() === part.toLowerCase()
       );
       if (found) {
-        result.push(found[0] === "space" ? "Space" : found[0].toUpperCase());
+        const keyName = found[0].toLowerCase();
+        if (keyName === 'space') {
+          result.push('Space');
+        } else if (keyName === 'wheelup' || keyName === 'wheeldn') {
+          result.push(formatKeyName(keyName));
+        } else {
+          result.push(found[0].toUpperCase());
+        }
       } else {
         result.push(part); // fallback если код неизвестен
       }
@@ -53,6 +63,8 @@ export function normalizeKey(input) {
       const lower = part.toLowerCase();
       if (modifierMap[lower]) {
         result.push(modifierMap[lower]);
+      } else if (lower === 'wheelup' || lower === 'wheeldn') {
+        result.push(formatKeyName(lower));
       } else if (part.length === 1) {
         result.push(part.toUpperCase());
       } else {
@@ -61,20 +73,20 @@ export function normalizeKey(input) {
     }
   }
 
-  return result.join(" + ");
+  return result.join(' + ');
 }
 
 // Обратная функция: название → hex
 export function encodeKey(display) {
-  if (!display) return "";
+  if (!display) return '';
 
   // "Ctrl + Q" → ["Ctrl", "Q"]
   const parts = display
-    .split("+")
+    .split('+')
     .map((p) => p.trim())
     .filter(Boolean);
 
-  if (parts.length === 0) return "";
+  if (parts.length === 0) return '';
 
   // === одиночная клавиша или модификатор ===
   if (parts.length === 1) {
@@ -89,8 +101,8 @@ export function encodeKey(display) {
     const modifier = parts[0].toLowerCase();
     const key = parts[1].toLowerCase();
 
-    if (!(modifier === "ctrl" || modifier === "alt" || modifier === "shift")) {
-      throw new Error("Допустимы только Ctrl или Alt как модификаторы");
+    if (!(modifier === 'ctrl' || modifier === 'alt' || modifier === 'shift')) {
+      throw new Error('Допустимы только Ctrl или Alt как модификаторы');
     }
 
     const code = KEY_TO_CODE[key];
@@ -99,5 +111,5 @@ export function encodeKey(display) {
     return modifier.charAt(0).toUpperCase() + modifier.slice(1) + code;
   }
 
-  throw new Error("Нельзя закодировать больше двух частей");
+  throw new Error('Нельзя закодировать больше двух частей');
 }

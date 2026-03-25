@@ -19,6 +19,7 @@ import (
 	"lce/backend/updater"
 	"lce/backend/utils"
 	"lce/backend/version"
+	"lce/backend/windows"
 )
 
 //go:embed all:frontend/dist
@@ -54,12 +55,17 @@ func main() {
 	// Initialize version info: manifest in AppData, assets in ExeDir
 	version.Init(manifestData, themesFS, localesFS, appDataDir, exeDir)
 
+	themeService, err := theming.NewThemeService()
+	if err != nil {
+		log.Fatalf("failed to initialize theme service: %v", err)
+	}
+
 	app := application.New(application.Options{
 		Name:        "LoD Config Editor",
 		Description: "A demo of using raw HTML & CSS",
 		Services: []application.Service{
 			application.NewService(i18n.NewI18N()),
-			application.NewService(theming.NewThemeService()),
+			application.NewService(themeService),
 			application.NewService(paths_scanner.NewScanner()),
 			application.NewService(config_editor.NewConfigEditor()),
 			application.NewService(taskbar.NewTaskbarUtils()),
@@ -74,7 +80,7 @@ func main() {
 		Width:     1300,
 		Height:    800,
 		Frameless: true,
-		URL:       "/",
+		URL:       "/?window=main",
 	})
 
 	app.RegisterService(application.NewService(utils.NewUtils(window)))
@@ -91,9 +97,10 @@ func main() {
 	updaterService := updater.NewUpdater(app)
 	app.RegisterService(application.NewService(updaterService))
 
+	windowService := windows.NewWindowService(app)
+	app.RegisterService(application.NewService(windowService))
+
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
-
-
 }

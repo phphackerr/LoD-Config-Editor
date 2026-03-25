@@ -5,7 +5,6 @@
 </script>
 
 <script>
-  // @ts-nocheck
   import Checkbox from './components/Checkbox.svelte';
   import Dropdown from './components/Dropdown.svelte';
   import ColorPicker from './components/ColorPicker.svelte';
@@ -130,6 +129,18 @@
       />
 
       <Slider
+        label="VISUALS.uitextscale"
+        section={SECTION}
+        option="UITextScale"
+        min={0.2}
+        max={2.0}
+        step={0.1}
+        defaultValue={0.8}
+        valueType="float"
+        ttKey="VISUALS.TOOLTIPS.uitextscale_tooltip"
+      />
+
+      <Slider
         label="VISUALS.cameraheight"
         section={SECTION}
         option="CameraHeight"
@@ -157,6 +168,7 @@
     width: 100%;
     height: 100%;
     overflow-y: auto;
+    background: var(--visuals-bg-color, rgba(0, 0, 0, 0));
   }
 
   .options-container {

@@ -6,3 +6,29 @@ import * as ThemeService from "./themeservice.js";
 export {
     ThemeService
 };
+
+export {
+    ColorLiteral,
+    ComponentStyle,
+    Derived,
+    GradientLiteral,
+    GradientStop,
+    Literal,
+    NumberLiteral,
+    Ref,
+    ResolvedTheme,
+    ResolvedToken,
+    ShadowLayer,
+    Theme,
+    ThemeMeta,
+    Token,
+    TokenMeta,
+    TokenType,
+    TokenValue
+} from "./models.js";
+
+import * as $models from "./models.js";
+
+/**
+ * @typedef {$models.ThemeError} ThemeError
+ */

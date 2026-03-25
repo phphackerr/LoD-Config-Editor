@@ -11,79 +11,105 @@ import (
 )
 
 type ConfigWatcher struct {
-	app        *application.App
-	filePath   string
-	watcher    *fsnotify.Watcher
-	stop       chan struct{}
-	stopOnce   sync.Once
-	lastEvent  time.Time
+	app       *application.App
+	filePath  string
+	watcher   *fsnotify.Watcher
+	stop      chan struct{}
+	done      chan struct{}
+	mu        sync.Mutex
+	lastEvent time.Time
+
 	debounceMs int
 }
 
 // New создаёт пустой вотчер
 func New(app *application.App) *ConfigWatcher {
 	return &ConfigWatcher{
-		app:  app,
-		stop: make(chan struct{}),
+		app: app,
 	}
 }
 
 // StartWatching — вызывается из фронтенда
 func (cw *ConfigWatcher) StartWatching(path string, debounceMs int) error {
-	// если вотчер уже активен — останавливаем
-	if cw.watcher != nil {
-		cw.StopWatching()
-	}
+	cw.StopWatching()
 
 	if debounceMs <= 0 {
 		debounceMs = 200 // дефолт
 	}
 
-	cw.filePath = path
-	cw.debounceMs = debounceMs
-	cw.stopOnce = sync.Once{}
-	cw.stop = make(chan struct{})
-
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
 	}
-	cw.watcher = w
 
-	dir := filepath.Dir(cw.filePath)
+	dir := filepath.Dir(path)
 	if err := w.Add(dir); err != nil {
+		_ = w.Close()
 		return err
 	}
 
-	go cw.run()
+	cw.mu.Lock()
+	cw.filePath = path
+	cw.debounceMs = debounceMs
+	cw.watcher = w
+	cw.stop = make(chan struct{})
+	cw.done = make(chan struct{})
+	cw.lastEvent = time.Time{}
+	stop := cw.stop
+	done := cw.done
+	cw.mu.Unlock()
+
+	go cw.run(w, stop, done)
 	return nil
 }
 
-func (cw *ConfigWatcher) run() {
+func (cw *ConfigWatcher) run(w *fsnotify.Watcher, stop <-chan struct{}, done chan<- struct{}) {
+	defer close(done)
+	defer func() {
+		_ = w.Close()
+	}()
+
 	for {
 		select {
-		case event := <-cw.watcher.Events:
-			if filepath.Clean(event.Name) == filepath.Clean(cw.filePath) &&
+		case event, ok := <-w.Events:
+			if !ok {
+				return
+			}
+
+			cw.mu.Lock()
+			filePath := cw.filePath
+			debounce := cw.debounceMs
+			lastEvent := cw.lastEvent
+			cw.mu.Unlock()
+
+			if filepath.Clean(event.Name) == filepath.Clean(filePath) &&
 				(event.Op&fsnotify.Write == fsnotify.Write ||
 					event.Op&fsnotify.Create == fsnotify.Create ||
 					event.Op&fsnotify.Rename == fsnotify.Rename ||
 					event.Op&fsnotify.Chmod == fsnotify.Chmod) {
 
 				now := time.Now()
-				if now.Sub(cw.lastEvent) < time.Duration(cw.debounceMs)*time.Millisecond {
+				if now.Sub(lastEvent) < time.Duration(debounce)*time.Millisecond {
 					continue
 				}
+
+				cw.mu.Lock()
 				cw.lastEvent = now
+				cw.mu.Unlock()
 
 				log.Println("⚡ Config file changed:", event)
-				cw.app.Event.Emit("config-changed", cw.filePath)
+				cw.app.Event.Emit("config-changed", filePath)
 			}
 
-		case err := <-cw.watcher.Errors:
-			log.Println("Watcher error:", err)
+		case err, ok := <-w.Errors:
+			if !ok {
+				return
+			}
+			if err != nil {
+				log.Println("Watcher error:", err)
+			}
 
-		case <-cw.stop:
-			_ = cw.watcher.Close()
+		case <-stop:
 			return
 		}
 	}
@@ -91,11 +117,22 @@ func (cw *ConfigWatcher) run() {
 
 // StopWatching — останавливает наблюдение
 func (cw *ConfigWatcher) StopWatching() {
-	cw.stopOnce.Do(func() {
-		close(cw.stop)
-		if cw.watcher != nil {
-			_ = cw.watcher.Close()
-			cw.watcher = nil
+	cw.mu.Lock()
+	stop := cw.stop
+	done := cw.done
+	cw.stop = nil
+	cw.done = nil
+	cw.watcher = nil
+	cw.mu.Unlock()
+
+	if stop != nil {
+		close(stop)
+		if done != nil {
+			select {
+			case <-done:
+			case <-time.After(2 * time.Second):
+				log.Println("Watcher stop timeout")
+			}
 		}
-	})
+	}
 }

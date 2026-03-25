@@ -6,9 +6,13 @@
 // @ts-ignore: Unused imports
 import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 /**
- * ApplyChangesToConfig — применяет изменения из diff к текущему конфигу в памяти и сохраняет его.
- * @param {{ [_: string]: { [_: string]: { [_: string]: string } } }} diff
+ * ApplyChangesToConfig applies external changes into in-memory config and saves it.
+ * @param {$models.SectionDiff[]} diff
  * @returns {$CancellablePromise<void>}
  */
 export function ApplyChangesToConfig(diff) {
@@ -16,19 +20,18 @@ export function ApplyChangesToConfig(diff) {
 }
 
 /**
- * CheckConfigDiff сравнивает текущий конфиг в памяти с тем, что на диске,
- * возвращает map[section]map[key]value только с изменёнными значениями
- * @returns {$CancellablePromise<{ [_: string]: { [_: string]: { [_: string]: string } } }>}
+ * CheckConfigDiff compares the current in-memory config with the on-disk file
+ * and returns only externally changed sections/keys.
+ * @returns {$CancellablePromise<$models.SectionDiff[]>}
  */
 export function CheckConfigDiff() {
     return $Call.ByID(3404297753).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType1($result);
     }));
 }
 
 /**
- * DiscardExternalChanges — перезаписывает конфиг на диске текущим состоянием из памяти.
- * Это отменяет любые внешние изменения, применяя нашу in-memory версию.
+ * DiscardExternalChanges overwrites the on-disk config with current in-memory state.
  * @returns {$CancellablePromise<void>}
  */
 export function DiscardExternalChanges() {
@@ -43,6 +46,16 @@ export function DiscardExternalChanges() {
  */
 export function GetConfigValue(section, option) {
     return $Call.ByID(2375517143, section, option);
+}
+
+/**
+ * GetConfigValueStrict returns config value with strict error semantics.
+ * @param {string} section
+ * @param {string} option
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetConfigValueStrict(section, option) {
+    return $Call.ByID(82077650, section, option);
 }
 
 /**
@@ -66,11 +79,11 @@ export function IsConfigAvailable() {
 /**
  * Загрузить конфиг
  * @param {string} configPath
- * @returns {$CancellablePromise<{ [_: string]: { [_: string]: string } }>}
+ * @returns {$CancellablePromise<{ [_ in string]?: { [_ in string]?: string } }>}
  */
 export function LoadConfig(configPath) {
     return $Call.ByID(680888446, configPath).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType1($result);
+        return $$createType3($result);
     }));
 }
 
@@ -86,6 +99,7 @@ export function SetConfigValue(section, option, value) {
 }
 
 // Private type creation functions
-const $$createType0 = $Create.Map($Create.Any, $Create.Any);
-const $$createType1 = $Create.Map($Create.Any, $$createType0);
-const $$createType2 = $Create.Map($Create.Any, $$createType1);
+const $$createType0 = $models.SectionDiff.createFrom;
+const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = $Create.Map($Create.Any, $Create.Any);
+const $$createType3 = $Create.Map($Create.Any, $$createType2);

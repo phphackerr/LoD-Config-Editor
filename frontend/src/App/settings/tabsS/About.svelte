@@ -8,9 +8,11 @@
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
   import { GetAppVersion, OpenURL, GetDiscordStats } from '/bindings/lce/backend/utils/utils';
-  import { GetLanguages } from '/bindings/lce/backend/i18n/i18n';
+  import { getAvailableLanguages } from '../../lib/store/i18n';
+  import { notifyError } from '../../lib/store/notifications';
   import { checkForUpdates, updaterStore } from '../../lib/store/updater';
   import { cubicOut } from 'svelte/easing';
+  import { tt } from '../../lib/tooltip';
 
   let appVersion = '...';
   let discordStats = null;
@@ -21,20 +23,21 @@
     try {
       appVersion = await GetAppVersion();
     } catch (e) {
-      console.error('Failed to get app version:', e);
-      appVersion = 'Unknown';
+      notifyError($t('ERRORS.about.app_version'));
+      appVersion = $t('COMMON.unknown');
     }
 
     try {
       discordStats = await GetDiscordStats('d35eBUs8P5');
     } catch (e) {
-      console.error('Failed to get discord stats:', e);
+      notifyError($t('ERRORS.about.discord_stats'));
     }
 
-    try {
-      languages = await GetLanguages();
-    } catch (e) {
-      console.error('Failed to get languages:', e);
+    const languagesResult = await getAvailableLanguages();
+    if (languagesResult.ok) {
+      languages = Array.isArray(languagesResult.data) ? languagesResult.data : [];
+    } else {
+      notifyError(languagesResult.error || $t('ERRORS.i18n.load_languages'));
     }
   });
 
@@ -81,7 +84,8 @@
         class="refresh-btn"
         on:click={handleCheckUpdate}
         disabled={$updaterStore.checking}
-        title={$t('SETTINGS.ABOUT.check_for_updates')}
+        aria-label={$t('SETTINGS.ABOUT.check_for_updates')}
+        use:tt={{ content: $t('SETTINGS.ABOUT.check_for_updates') }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -263,7 +267,7 @@
     transition:
       transform 0.2s,
       box-shadow 0.2s;
-    color: white;
+    color: var(--text-color-primary, #fff);
   }
 
   .link-btn:hover {
@@ -276,11 +280,11 @@
   }
 
   .link-btn.discord {
-    background-color: #5865f2;
+    background-color: var(--action-primary-bg, #3ba475);
   }
 
   .link-btn.github {
-    background-color: #333;
+    background-color: var(--action-secondary-bg, #333);
   }
 
   .version-wrapper {
@@ -306,7 +310,7 @@
 
   .refresh-btn:hover:not(:disabled) {
     opacity: 1;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--element-bg-hover-color, rgba(255, 255, 255, 0.1));
   }
 
   .refresh-btn:disabled {
@@ -316,7 +320,7 @@
 
   .status-text {
     font-size: 0.9rem;
-    color: #4caf50;
+    color: var(--status-success-text, #9be5be);
     margin-left: 10px;
   }
 
@@ -343,7 +347,7 @@
   .online-count {
     font-size: 0.75rem;
     opacity: 0.8;
-    color: #09f189;
+    color: var(--status-success-text, #9be5be);
     font-weight: 700;
   }
 
@@ -365,14 +369,14 @@
     width: 100%;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     text-align: left;
   }
 
   .credit-section h3 {
     font-size: 1.1rem;
     margin-bottom: 15px;
-    color: var(--accent-color, #646cff);
+    color: var(--accent-color, #ffd700);
   }
 
   .credit-section p {
